@@ -9,6 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
   /* Tema guardado: se aplica antes de pintar para evitar parpadeo */
@@ -264,7 +266,77 @@ details.more summary{cursor:pointer;color:var(--accent);font-size:12px}
 .gtbl tr.grp td{background:var(--surface-2);font-weight:600;color:var(--ink);padding-top:10px}
 .gtbl td.ej{font-weight:500}
 .rules{margin:6px 0 0;padding-left:20px;line-height:1.7}
-@media print{ header,.fbar,#vMapa,#vTablero,#vCalidad,.abtn{display:none!important} #vGuia{display:block!important;padding:0} .panel{border:0} html,body{height:auto} }
+@media print{ body:not(.pf) header,body:not(.pf) .fbar,body:not(.pf) #vMapa,body:not(.pf) #vTablero,body:not(.pf) #vCalidad,body:not(.pf) .abtn{display:none!important} body:not(.pf) #vGuia{display:block!important;padding:0} .panel{border:0} html,body{height:auto}
+  body.pf > *:not(#printArea){display:none!important} body.pf #printArea{display:block!important} }
+#printArea{display:none;color:#14212b;background:#fff;font-size:12px;width:720px;max-width:100%}
+body.pf #printArea{display:block;position:fixed;left:-20000px;top:0}
+@media print{ body.pf #printArea{position:static;left:auto} }
+#printArea .p-top{display:flex;justify-content:space-between;gap:12px;border-bottom:3px solid #f2b705;padding-bottom:8px;margin-bottom:10px}
+#printArea h1{font-size:18px;margin:0}
+#printArea .p-date{font-size:11px;color:#5b6b78;text-align:right}
+#pmap{height:240px;border:1px solid #d8dee4;border-radius:8px;margin-bottom:10px}
+#printArea .fhead{background:none;padding:0 0 8px}
+#printArea .sec,#printArea .sum,#printArea .missing{margin-left:0;margin-right:0;break-inside:avoid}
+#printArea .raw{max-height:none}
+@page{margin:12mm}
+#drawer{position:fixed;top:56px;right:0;bottom:0;width:440px;max-width:100%;background:var(--surface);border-left:1px solid var(--line);box-shadow:var(--shadow);z-index:1500;transform:translateX(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column}
+#drawer.on{transform:none}
+#drawer .dhead{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);font-weight:600}
+#drawer .dhead button{border:0;background:none;font-size:22px;cursor:pointer;color:var(--muted);line-height:1}
+#drawerBody{flex:1;overflow:auto}
+.actions.sm{margin-top:6px}
+.actions.sm .abtn{height:30px;font-size:12px;padding:0 10px}
+.seg2{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-s);box-shadow:0 2px 8px rgba(0,0,0,.12);overflow:hidden}
+.seg2 button{border:0;background:none;padding:0 12px;height:32px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted)}
+.seg2 button.on{background:var(--head);color:#fff}
+.rpanel{display:none;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);box-shadow:var(--shadow);padding:10px 12px;width:250px;font-size:12px}
+.rpanel.on{display:block;animation:popIn .14s ease-out}
+.rpanel label{display:block;color:var(--muted);margin:4px 0 3px}
+.rpanel input,.rpanel select{height:30px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--surface-2);padding:0 8px}
+.rpanel input{width:100%}
+.rpanel .acts2{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.rtray{position:absolute;z-index:600;bottom:22px;left:50%;transform:translateX(-50%);width:360px;max-width:calc(100% - 300px);background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--hivis);border-radius:var(--r-m);box-shadow:var(--shadow);padding:10px 12px;display:none;font-size:12px}
+.rtray.on{display:block;animation:popIn .18s ease-out}
+.rtray .rt-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}
+.rtray ol{list-style:none;margin:0;padding:0;max-height:180px;overflow:auto}
+.rtray li{display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid var(--soft)}
+.rtray li button{border:1px solid var(--line);background:var(--surface);border-radius:3px;width:22px;height:22px;cursor:pointer;font-size:10px;color:var(--muted);padding:0}
+.rtray li button:disabled{opacity:.35;cursor:default}
+.rt-n{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rt-act{display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.rt-act .abtn{height:30px;font-size:12px;padding:0 10px}
+.rnum{transform:translate(-50%,-150%);background:#0f2a3a;color:#fff;border:2px solid #f2b705;border-radius:50%;width:22px;height:22px;display:grid;place-items:center;font:700 11px "IBM Plex Sans",sans-serif}
+.rnum.s{transform:none;flex:none;width:20px;height:20px;font-size:10px}
+.clu{border-radius:50%;display:grid;place-items:center;font:700 12px "IBM Plex Sans",sans-serif;color:#fff;background:var(--c);box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 35%,transparent),0 2px 6px rgba(0,0,0,.3);transform:translate(-50%,-50%);text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.chooser .ch-head{background:var(--head);color:#fff;padding:10px 14px;font-weight:600}
+.chooser button{display:flex;gap:10px;align-items:flex-start;width:100%;border:0;border-top:1px solid var(--soft);background:none;padding:8px 14px;cursor:pointer;text-align:left;color:var(--ink);font:13px "IBM Plex Sans",sans-serif}
+.chooser button:hover{background:var(--surface-2)}
+.chooser small{display:block;color:var(--muted);font-size:11px}
+.chooser{max-height:320px;overflow:auto}
+.idpop{width:320px}
+.idpop textarea{width:calc(100% - 20px);margin:0 10px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--surface-2);padding:8px;font:13px "IBM Plex Sans",sans-serif;resize:vertical}
+.ms > button#bIds.act{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:500}
+.pp-fl{margin-top:4px;font-size:12px;color:#fff;background:rgba(255,255,255,.12);border-radius:4px;padding:2px 6px;display:inline-block}
+.fl{font-size:13px;margin-top:3px;color:var(--ink)}
+.fl b{color:var(--accent)}
+.fl2{display:block;color:var(--muted);font-size:11px}
+.cp{border:0;background:none;color:var(--muted);cursor:pointer;padding:0 0 0 6px;vertical-align:-2px}
+.cp svg{width:13px;height:13px}
+.cp:hover{color:var(--accent)}
+#ms-rec .pop{width:320px;left:auto;right:0}
+#ms-rec .opts{max-height:360px}
+.lgb{display:inline-flex;align-items:center;gap:5px;border:1px solid transparent;background:none;border-radius:999px;padding:2px 8px;cursor:pointer;font-size:12px;color:var(--muted)}
+.lgb:hover{border-color:var(--line)}
+.lgb.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.lgb i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.hb .tr.stack i{cursor:pointer}
+.hb .tr.stack i:hover{filter:brightness(1.12);outline:2px solid var(--ink);outline-offset:-2px}
+.tlist{max-height:520px;overflow:auto;border:1px solid var(--line);border-radius:var(--r-m)}
+.tlist thead th{position:sticky;top:0;background:var(--surface-2);z-index:1}
+.tlist tr.sel,.tbl tr.sel{background:color-mix(in srgb,var(--hivis) 14%,var(--surface))}
+.tlist td{white-space:nowrap}
+.tlist .dot{display:inline-block;flex:none}
+.tlist td:last-child{white-space:normal;min-width:160px}
 .toast{position:fixed;bottom:18px;left:50%;transform:translate(-50%,16px);opacity:0;pointer-events:none;background:var(--head);color:#fff;padding:9px 16px;border-radius:var(--r-m);z-index:9999;box-shadow:var(--shadow);transition:transform .25s cubic-bezier(.2,.8,.2,1),opacity .25s}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 @property --p{syntax:"<number>";inherits:false;initial-value:0}
@@ -319,9 +391,14 @@ details.more summary{cursor:pointer;color:var(--accent);font-size:12px}
 <section class="fbar" aria-label="Filtros">
   <div class="frow">
     <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-      <input type="search" id="q" placeholder="Buscar ID, nombre, dirección o distrito" aria-label="Buscar site"></div>
+      <input type="search" id="q" placeholder="Buscar ID, nombre, nombre en torrera o dirección" aria-label="Buscar site"></div>
+    <div class="ms" id="ms-ids"><button type="button" id="bIds" title="Pega varios Site ID para ver solo esos">Lista de IDs</button><div class="pop idpop" role="dialog" aria-label="Lista de Site ID">
+      <p class="hint" style="margin:10px 10px 6px">Pega los Site ID separados por salto de línea, coma o espacio (por ejemplo, los tickets abiertos del turno).</p>
+      <textarea id="idsTxt" rows="7" placeholder="LI0043&#10;LI0560&#10;LU3598"></textarea>
+      <div class="acts" style="padding:8px 10px"><button class="linkbtn" id="idsClear">Quitar lista</button><button class="abtn pri" id="idsApply" style="height:30px">Ver estos sites</button></div></div></div>
     <div id="msHost" class="frow"></div>
     <label class="tgl"><input type="checkbox" id="cHw" checked> Solo mantenimiento Huawei</label>
+    <div class="ms" id="ms-rec"><button type="button" id="bRec" title="Sites abiertos recientemente (tecla R)">Recientes</button><div class="pop" role="dialog" aria-label="Sites recientes"><div class="opts" id="recList"></div></div></div>
     <button class="linkbtn" id="bReset" style="margin-left:6px">Limpiar filtros</button>
     <span class="fcount" id="fcount"></span>
   </div>
@@ -333,8 +410,19 @@ details.more summary{cursor:pointer;color:var(--accent);font-size:12px}
     <div id="map"></div>
     <div class="mapbtns">
       <button class="mbtn" id="bFit" title="Encuadrar el mapa en los sites filtrados"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><circle cx="12" cy="12" r="2.5"/></svg>Centrar</button>
+      <div class="seg2" role="group" aria-label="Tipo de vista del mapa"><button data-m="puntos" class="on">Puntos</button><button data-m="cluster">Agrupados</button></div>
+      <button class="mbtn" id="bRadio" title="Ver los sites dentro de un radio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="2"/></svg>Buscar por radio</button>
+      <div class="rpanel" id="rpanel">
+        <label for="rCoord">Punto (latitud, longitud)</label>
+        <input id="rCoord" placeholder="-12.0464, -77.0428">
+        <label for="rKm">Radio</label>
+        <select id="rKm"><option>1</option><option>2</option><option selected>5</option><option>10</option><option>20</option><option>50</option></select><span class="hint" style="margin:0 0 0 6px">km</span>
+        <div class="hint">También puedes hacer clic derecho en el mapa.</div>
+        <div class="acts2"><button class="linkbtn" id="rClear">Quitar</button><button class="abtn pri" id="rApply" style="height:30px">Buscar</button></div>
+      </div>
       <button class="mbtn" id="bSel" title="Centrar en el site seleccionado" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>Ir al seleccionado</button>
     </div>
+    <div class="rtray" id="rtray"></div>
     <div class="legend">
       <select id="colorBy" aria-label="Colorear mapa por">
         <option value="aut">Color por autonomía</option>
@@ -362,6 +450,7 @@ details.more summary{cursor:pointer;color:var(--accent);font-size:12px}
           <option value="comp">Completitud (menor primero)</option>
           <option value="lleg">Tiempo de llegada (mayor primero)</option>
           <option value="fm">FM Office y Site ID</option>
+          <option value="dist">Distancia al punto buscado</option>
         </select></div>
       <div id="list"><div class="empty">Carga el exportable para ver la lista de sites.</div></div>
     </div>
@@ -377,7 +466,7 @@ details.more summary{cursor:pointer;color:var(--accent);font-size:12px}
     <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start">
       <div><h3>Guía de llenado de la ficha del site</h3><p class="sub">Qué se escribe en cada campo del formulario de edición del site en Autin (Gestión de sites, editar). La primera columna es la etiqueta tal como aparece en el formulario y en el exportable.</p></div>
       <div class="btnrow"><button class="abtn pri" id="bPlantG"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 8h12v12H8zM4 16V4h12"/></svg>Copiar plantilla en blanco</button><button class="abtn" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6M6 18H4v-7h16v7h-2M8 14h8v7H8z"/></svg>Imprimir</button></div></div>
-    <table class="tbl gtbl"><thead><tr><th style="width:18%">Campo en Autin</th><th style="width:24%">Qué va</th><th style="width:26%">Ejemplo</th><th>Reglas</th></tr></thead><tbody><tr class="grp"><td colspan="4">Llegada</td></tr><tr><td><b>Site address</b></td><td>Dirección y referencia para llegar</td><td class="ej">AV. LOS CONDORES S/N (REF: FRENTE A LA COMISARIA, PORTON VERDE)</td><td>La referencia va entre paréntesis después de REF:.</td></tr><tr><td><b>Longitude / Latitude</b></td><td>Coordenadas en grados decimales</td><td class="ej">-76.96398 / -12.01716</td><td>Longitude entre -68 y -82; Latitude entre 0 y -19. Hay 18 sites con los valores invertidos.</td></tr><tr><td><b>Tiempo de llegada</b></td><td>Minutos desde la base del team (se elige de la lista)</td><td class="ej">45</td><td>El 64% de sites tiene 90, que es el valor por defecto: validarlo con el supervisor.</td></tr><tr class="grp"><td colspan="4">Acceso</td></tr><tr><td><b>Torrera</b></td><td>Dueño de la infraestructura</td><td class="ej">SITES DEL PERU</td><td>Usar siempre el mismo nombre: SITES DEL PERU, CLARO, ATC, ATP, DESARROLLOS TERRESTRES, PHOENIX TOWER INTERNATIONAL, SBA, ENTEL.</td></tr><tr><td><b>Ubicación de llaves</b></td><td>Dónde se recoge la llave y su número de llavero</td><td class="ej">ARRIOLA POP-EB #46 / AEROPUERTO #19<br>NO REQUIERE</td><td>Varias sedes separadas por " / ". Máximo 100 caracteres.</td></tr><tr><td><b>Tipo de acceso</b></td><td>Cómo se ingresa y qué trámite pide, solo con las palabras de la lista, separadas por coma</td><td class="ej">LLAVE, ILOQ, CARTA, CORREO</td><td>Cómo se ingresa: ACCESO DIRECTO, LLAVE, ILOQ, CANDADO ELECTRONICO, MULTILOCK. Trámite: CARTA, CORREO, LLAMADA, PORTAL, SCTR. ILOQ incluye las llaves NFC; CANDADO ELECTRONICO incluye padlock, Teleporte y chapa electrónica. Máximo 192. No confundir con "Tipo acceso" (2G-3G-4G).</td></tr><tr><td><b>Life cycle</b></td><td>Horario de acceso / horas de anticipación para pedirlo</td><td class="ej">L-V 08:00-18:00, S 08:00-13:00 / 48H<br>24X7</td><td>Si no pide anticipación, solo el horario.</td></tr><tr><td><b>Detalle acceso</b></td><td>Indicaciones propias del site, con fecha y siglas de quien actualiza</td><td class="ej">15/10/25 INGRESO SOLO DE DIA POR PUERTA 7 // AF</td><td>Sin los correos genéricos de la torrera. Máximo 1000 caracteres.</td></tr><tr><td><b>Nombre responsable</b></td><td>Contacto de acceso (persona o empresa)</td><td class="ej">SRA. REBECA (PROPIETARIA)</td><td></td></tr><tr><td><b>Móvil responsable</b></td><td>Teléfonos del contacto</td><td class="ej">975355821 / 993506895</td><td></td></tr><tr><td><b>Dirección reponsable</b></td><td>Correos del contacto de acceso</td><td class="ej">accesos@empresa.com; oym@claro.com.pe</td><td>Hoy está casi vacío; se usa para correos.</td></tr><tr><td><b>Access Issue</b></td><td>Yes si el acceso es complicado</td><td class="ej">Yes</td><td>Centro comercial, ingreso solo de día, coordinación previa obligatoria o accesos que suelen fallar. El formulario trae "No" marcado por defecto.</td></tr><tr class="grp"><td colspan="4">Seguridad</td></tr><tr><td><b>Dangerous Site</b></td><td>Yes si es zona contingente</td><td class="ej">Yes</td><td>El detalle (solo de noche, requiere resguardo) va en Detalle acceso. "No" viene marcado por defecto.</td></tr><tr class="grp"><td colspan="4">Trabajo en campo</td></tr><tr><td><b>PLN ID</b></td><td>Escalera: SI o NO / tipo / altura</td><td class="ej">SI / TELESCOPICA / 6 M<br>NO</td><td>Tipos: TIJERA, TELESCOPICA, EXTENSIBLE, DE GATO. Hoy está vacío en todos los sites.</td></tr><tr><td><b>GEP Acarreo</b></td><td>Acarreo manual: SI o NO / distancia / detalle</td><td class="ej">SI / 80 M / 3 PISOS POR ESCALERA<br>NO</td><td>AUDITABLE, APEC y ONPE no van aquí: van en Auditables.</td></tr><tr><td><b>Auditables</b></td><td>Si el site es auditable y eventos especiales</td><td class="ej">AUDITABLE, APEC</td><td></td></tr><tr><td><b>Tipo Torre / Altura Torre(metros) / Altura Edificacion(metros)</b></td><td>Datos de la torre</td><td class="ej">AUTOSOPORTADA / 30 / 12</td><td>En Lima están casi vacíos (1%).</td></tr><tr class="grp"><td colspan="4">Energía</td></tr><tr><td><b>Autonomía de baterías</b></td><td>Última autonomía confiable, solo el número en minutos</td><td class="ej">240<br>-1</td><td>-1 significa sin dato.</td></tr><tr><td><b>Acceptance date</b></td><td>Fecha de esa medición</td><td class="ej">13/10/2026</td><td>Se elige en el calendario. Sin fecha no se sabe qué tan vieja es la autonomía.</td></tr><tr><td><b>Comentarios autonomía</b></td><td>Historial: una línea por medición, la más reciente arriba</td><td class="ej">13/10/26 - 240 MIN - CORTE REAL - J. PEREZ</td><td>Fuente: CORTE REAL, PRUEBA o CICSA. Es el registro de autonomías después de un corte.</td></tr><tr><td><b>Capacidad GE instalar</b></td><td>Grupo electrógeno que se lleva al site</td><td class="ej">GE PORTATIL 8KW</td><td>GE PORTATIL 8KW, 12KW, 17KW o 20KW; GE ENCARRETADO 20KW, 60KW u 80KW; GE ESTACIONARIO + kW; NO APLICA. Máximo 50.</td></tr><tr><td><b>Fuel tank No.</b></td><td>Dónde se coloca el GE / metros de cable</td><td class="ej">AZOTEA JUNTO AL TABLERO / 30 M</td><td>Hoy está vacío (solo MASISEA tiene un 1).</td></tr></tbody></table>
+    <table class="tbl gtbl"><thead><tr><th style="width:18%">Campo en Autin</th><th style="width:24%">Qué va</th><th style="width:26%">Ejemplo</th><th>Reglas</th></tr></thead><tbody><tr class="grp"><td colspan="4">Llegada</td></tr><tr><td><b>Site address</b></td><td>Dirección y referencia para llegar</td><td class="ej">AV. LOS CONDORES S/N (REF: FRENTE A LA COMISARIA, PORTON VERDE)</td><td>La referencia va entre paréntesis después de REF:.</td></tr><tr><td><b>Longitude / Latitude</b></td><td>Coordenadas en grados decimales</td><td class="ej">-76.96398 / -12.01716</td><td>Longitude entre -68 y -82; Latitude entre 0 y -19. Hay 18 sites con los valores invertidos.</td></tr><tr><td><b>Tiempo de llegada</b></td><td>Minutos desde la base del team (se elige de la lista)</td><td class="ej">45</td><td>El 64% de sites tiene 90, que es el valor por defecto: validarlo con el supervisor.</td></tr><tr class="grp"><td colspan="4">Acceso</td></tr><tr><td><b>Torrera</b></td><td>Dueño de la infraestructura</td><td class="ej">SITES DEL PERU</td><td>Usar siempre el mismo nombre: SITES DEL PERU, CLARO, ATC, ATP, DESARROLLOS TERRESTRES, PHOENIX TOWER INTERNATIONAL, SBA, ENTEL.</td></tr><tr><td><b>Functional location</b></td><td>Nombre o código que la torrera usa para el site, cuando es distinto al de Claro</td><td class="ej">LM JARDIN CUCUYA</td><td>Se usa al coordinar el acceso con la torrera. No aplica a sites de CLARO.</td></tr><tr><td><b>Ubicación de llaves</b></td><td>Dónde se recoge la llave y su número de llavero</td><td class="ej">ARRIOLA POP-EB #46 / AEROPUERTO #19<br>NO REQUIERE</td><td>Varias sedes separadas por " / ". Máximo 100 caracteres.</td></tr><tr><td><b>Tipo de acceso</b></td><td>Cómo se ingresa y qué trámite pide, solo con las palabras de la lista, separadas por coma</td><td class="ej">LLAVE, ILOQ, CARTA, CORREO</td><td>Cómo se ingresa: ACCESO DIRECTO, LLAVE, ILOQ, CANDADO ELECTRONICO, MULTILOCK. Trámite: CARTA, CORREO, LLAMADA, PORTAL, SCTR. ILOQ incluye las llaves NFC; CANDADO ELECTRONICO incluye padlock, Teleporte y chapa electrónica. Máximo 192. No confundir con "Tipo acceso" (2G-3G-4G).</td></tr><tr><td><b>Life cycle</b></td><td>Horario de acceso / horas de anticipación para pedirlo</td><td class="ej">L-V 08:00-18:00, S 08:00-13:00 / 48H<br>24X7</td><td>Si no pide anticipación, solo el horario.</td></tr><tr><td><b>Detalle acceso</b></td><td>Indicaciones propias del site, con fecha y siglas de quien actualiza</td><td class="ej">15/10/25 INGRESO SOLO DE DIA POR PUERTA 7 // AF</td><td>Sin los correos genéricos de la torrera. Máximo 1000 caracteres.</td></tr><tr><td><b>Nombre responsable</b></td><td>Contacto de acceso (persona o empresa)</td><td class="ej">SRA. REBECA (PROPIETARIA)</td><td></td></tr><tr><td><b>Móvil responsable</b></td><td>Teléfonos del contacto</td><td class="ej">975355821 / 993506895</td><td></td></tr><tr><td><b>Dirección reponsable</b></td><td>Correos del contacto de acceso</td><td class="ej">accesos@empresa.com; oym@claro.com.pe</td><td>Hoy está casi vacío; se usa para correos.</td></tr><tr><td><b>Access Issue</b></td><td>Yes si el acceso es complicado</td><td class="ej">Yes</td><td>Centro comercial, ingreso solo de día, coordinación previa obligatoria o accesos que suelen fallar. El formulario trae "No" marcado por defecto.</td></tr><tr class="grp"><td colspan="4">Seguridad</td></tr><tr><td><b>Dangerous Site</b></td><td>Yes si es zona contingente</td><td class="ej">Yes</td><td>El detalle (solo de noche, requiere resguardo) va en Detalle acceso. "No" viene marcado por defecto.</td></tr><tr class="grp"><td colspan="4">Trabajo en campo</td></tr><tr><td><b>PLN ID</b></td><td>Escalera: SI o NO / tipo / altura</td><td class="ej">SI / TELESCOPICA / 6 M<br>NO</td><td>Tipos: TIJERA, TELESCOPICA, EXTENSIBLE, DE GATO. Hoy está vacío en todos los sites.</td></tr><tr><td><b>GEP Acarreo</b></td><td>Acarreo manual: SI o NO / distancia / detalle</td><td class="ej">SI / 80 M / 3 PISOS POR ESCALERA<br>NO</td><td>AUDITABLE, APEC y ONPE no van aquí: van en Auditables.</td></tr><tr><td><b>Auditables</b></td><td>Si el site es auditable y eventos especiales</td><td class="ej">AUDITABLE, APEC</td><td></td></tr><tr><td><b>Tipo Torre / Altura Torre(metros) / Altura Edificacion(metros)</b></td><td>Datos de la torre</td><td class="ej">AUTOSOPORTADA / 30 / 12</td><td>En Lima están casi vacíos (1%).</td></tr><tr class="grp"><td colspan="4">Energía</td></tr><tr><td><b>Autonomía de baterías</b></td><td>Última autonomía confiable, solo el número en minutos</td><td class="ej">240<br>-1</td><td>-1 significa sin dato.</td></tr><tr><td><b>Acceptance date</b></td><td>Fecha de esa medición</td><td class="ej">13/10/2026</td><td>Se elige en el calendario. Sin fecha no se sabe qué tan vieja es la autonomía.</td></tr><tr><td><b>Comentarios autonomía</b></td><td>Historial: una línea por medición, la más reciente arriba</td><td class="ej">13/10/26 - 240 MIN - CORTE REAL - J. PEREZ</td><td>Fuente: CORTE REAL, PRUEBA o CICSA. Es el registro de autonomías después de un corte.</td></tr><tr><td><b>Capacidad GE instalar</b></td><td>Grupo electrógeno que se lleva al site</td><td class="ej">GE PORTATIL 8KW</td><td>GE PORTATIL 8KW, 12KW, 17KW o 20KW; GE ENCARRETADO 20KW, 60KW u 80KW; GE ESTACIONARIO + kW; NO APLICA. Máximo 50.</td></tr><tr><td><b>Fuel tank No.</b></td><td>Dónde se coloca el GE / metros de cable</td><td class="ej">AZOTEA JUNTO AL TABLERO / 30 M</td><td>Hoy está vacío (solo MASISEA tiene un 1).</td></tr></tbody></table>
   </div>
   <div class="panel guia"><h3>Cómo se levanta la información en campo</h3><ol class="rules">
     <li>Al despachar el ticket, HD envía al técnico la ficha del site ("Copiar ficha") y la plantilla de actualización ("Copiar plantilla").</li>
@@ -385,6 +474,9 @@ details.more summary{cursor:pointer;color:var(--accent);font-size:12px}
     <li>HD revisa que tenga el SITE ID y la reenvía, sin editar las etiquetas, al grupo de actualización de inventario.</li>
     <li>Periódicamente se exporta el chat del grupo, se normalizan los datos y se actualizan los sites en Autin.</li>
   </ol></div>
+  <div class="panel guia"><h3>Atajos de teclado</h3><ul class="rules">
+    <li><b>/</b> ir al buscador · <b>R</b> sites recientes · <b>↑ ↓</b> recorrer la lista de sites · <b>Enter</b> abrir la burbuja del site seleccionado · <b>Esc</b> cerrar ventanas</li>
+  </ul></div>
   <div class="panel guia"><h3>Reglas generales</h3><ul class="rules">
     <li>Escribir en MAYÚSCULAS y sin tildes en los valores de lista, para que el visor los reconozca.</li>
     <li>Cuando un campo lleva varias partes, separarlas con " / " (espacio, barra, espacio).</li>
@@ -396,6 +488,8 @@ details.more summary{cursor:pointer;color:var(--accent);font-size:12px}
   </ul></div>
 </section>
 <div id="loading"><div class="lcard"><div class="lbar"><i></i></div><span id="loadTxt">Cargando…</span></div></div>
+<aside id="drawer" aria-label="Ficha del site"><div class="dhead"><span>Ficha del site</span><button id="dClose" aria-label="Cerrar">×</button></div><div id="drawerBody"></div></aside>
+<div id="printArea"></div>
 <div id="tip"></div>
 <div class="toast" id="toast" role="status"></div>
 
@@ -431,7 +525,10 @@ const ICON={
   bolt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>',
   user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"/></svg>',
   near:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8" stroke-dasharray="3 3"/></svg>',
-  text:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>'
+  text:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>',
+  route:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h7a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h7"/></svg>',
+  print:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6M6 18H4v-7h16v7h-2M8 14h8v7H8z"/></svg>',
+  map:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z M9 4v14 M15 6v14"/></svg>'
 };
 
 /* ================= Modelo de datos =================
@@ -441,7 +538,7 @@ const COLMAP={
   id:["Site ID*","site_id"], name:["Site Name*","site_name"], region:["Region(Site)*","region_name"], fm:["FM Office*","fm_office"],
   lon:["Longitude","longitude"], lat:["Latitude","latitude"], lleg:["Tiempo de llegada","minutes_on_the_way"],
   dir:["Direccion de sitio","site_addr"], distrito:["DISTRITO","c_cmdb_distrito"], prov:["Provincia","c_cmdb_provincia"], dep:["Departamento","c_cmdb_dept"],
-  prio:["Prioridad de sitio","site_priority"], contratista:["Contratista","contractor_id"], vip:["Is VIP","is_vip"], importante:["Sitio Importante","is_important_site"],
+  funcLoc:["Functional Location","functional_location"], prio:["Prioridad de sitio","site_priority"], contratista:["Contratista","contractor_id"], vip:["Is VIP","is_vip"], importante:["Sitio Importante","is_important_site"],
   torrera:["Torrera","c_cmdb_torrera"], llaves:["Ubicación llaves","collocation_id"], acceso:["Tipo de acceso","phase"], horario:["Life Cycle","life_cycle"],
   det:["Detalle de acceso","description"], cNom:["Nombre responsable","lessor_name"], cTel:["Móvil responsable","lessor_phone"], cMail:["Dirección reponsable","lessor_address"],
   accIssue:["Access Issue","access_issue"], danger:["Dangerous Site","dangerous_site"],
@@ -514,7 +611,8 @@ const CRIT=[
   {lbl:"Acarreo", col:"GEP Acarreo", ok:s=>!!s.aca.req},
   {lbl:"Autonomía", col:"Autonomía de baterías", ok:s=>s.autMin!==null},
   {lbl:"Fecha de autonomía", col:"Acceptance date", ok:s=>!!s.autF},
-  {lbl:"GE a instalar", col:"Capacidad GE instalar", ok:s=>!!s.geCap}
+  {lbl:"GE a instalar", col:"Capacidad GE instalar", ok:s=>!!s.geCap},
+  {lbl:"Nombre en la torrera", col:"Functional location", ok:s=>!!s.funcLoc, applies:s=>s.torrera.toUpperCase()!=="CLARO"}
 ];
 
 function buildSite(r){
@@ -541,7 +639,8 @@ function buildSite(r){
   s.isCand=s.acc.mech.some(m=>ELECTR.includes(m));
   s.mecPrin=s.isCand?"Candado electrónico / iLOQ / multilock":s.acc.mech.includes("LLAVE")?"Llave":s.acc.mech.includes("ACCESO DIRECTO")?"Acceso directo":"Sin dato";
   const t=[s.acceso,s.det,s.comFin].join(" | "); s.pistas={}; for(const k in RE_SNIP){ const v=snippet(t,RE_SNIP[k]); if(v) s.pistas[k]=v; }
-  s.missing=CRIT.filter(c=>!c.ok(s)); s.comp=1-s.missing.length/CRIT.length;
+  const ap=CRIT.filter(c=>!c.applies||c.applies(s));
+  s.missing=ap.filter(c=>!c.ok(s)); s.comp=1-s.missing.length/ap.length;
   s.vipImp=/^YES$/i.test(s.vip)||/IMPORTANT/i.test(s.importante);
   return s;
 }
@@ -551,6 +650,7 @@ let SITES=[], VIEW=[], SEL=null, CUR_VIEW="vMapa", needFit=false;
 const FILTERS=[
   {id:"zona", lbl:"Zona", get:s=>[s.zona]},
   {id:"fm", lbl:"FM Office", get:s=>[s.fm||"(vacío)"]},
+  {id:"aut", lbl:"Autonomía", get:s=>[autBucket(s)]},
   {id:"jefe", lbl:"Jefe Huawei", get:s=>[s.jefeHw||"(vacío)"]},
   {id:"torrera", lbl:"Torrera", get:s=>[s.torrera||"(vacío)"]},
   {id:"sede", lbl:"Llave en", get:s=>s.ll.sedes.length?s.ll.sedes:["(vacío)"]},
@@ -573,11 +673,30 @@ const QUICK=[
   {k:"inc", lbl:"Ficha incompleta (< 70%)", c:"--none", fn:s=>s.comp<0.7}
 ];
 const QON=new Set();
+let VALF=null;
+const VALS=[
+  {k:"accnstd", lbl:"Tipo de acceso con palabras fuera de la lista", col:"Tipo de acceso", fn:s=>!!s.acceso&&!s.acc.std, val:s=>s.acceso},
+  {k:"autsinf", lbl:"Autonomía sin fecha de medición", col:"Acceptance date", fn:s=>s.autMin!==null&&!s.autF, val:s=>s.autMin+" min"},
+  {k:"aut24", lbl:"Autonomía mayor a 24 h (verificar)", col:"Autonomía de baterías", fn:s=>s.autMin!==null&&s.autMin>1440, val:s=>s.autMin+" min"},
+  {k:"llsinn", lbl:"Llave sin número de llavero", col:"Ubicación de llaves", fn:s=>s.ll.sedes.length>0&&!s.ll.no&&s.ll.items.every(i=>!i.n), val:s=>s.llaves},
+  {k:"coordinv", lbl:"Coordenadas invertidas", col:"Longitude / Latitude", fn:s=>s.swapped, val:s=>`${s.lon} / ${s.lat}`},
+  {k:"coordno", lbl:"Sin coordenadas válidas", col:"Longitude / Latitude", fn:s=>!s.hasCoord, val:s=>`${s.lon} / ${s.lat}`},
+  {k:"escnstd", lbl:"Escalera con formato no reconocido", col:"PLN ID", fn:s=>!!s.escRaw&&!s.esc.req, val:s=>s.escRaw},
+  {k:"acaleg", lbl:"GEP Acarreo con valor que no es acarreo", col:"GEP Acarreo", fn:s=>!!s.aca.legacy, val:s=>s.aca.legacy},
+  {k:"horsin", lbl:"Horario sin horas", col:"Life cycle", fn:s=>!!s.hor.txt&&!/\d/.test(s.hor.txt), val:s=>s.horario},
+  {k:"cont", lbl:"Dangerous Site en No, pero el texto dice contingente", col:"Dangerous Site", fn:s=>!s.danger&&!!s.pistas.contingente, val:s=>s.pistas.contingente},
+  {k:"lleg90", lbl:"Tiempo de llegada en 90 (posible valor por defecto)", col:"Tiempo de llegada", fn:s=>s.lleg===90, val:s=>"90"}
+];
+let IDSET=null, NEAR=null, ROUTE=[], MODE=lsGet("hdv_modo","puntos");
+function autBucket(s){ return s.autMin===null?"Sin dato":s.autMin<60?"Menos de 1 h":s.autMin<240?"De 1 a 4 h":"4 h o más"; }
 function baseSet(){ return SITES.filter(s=>!$("cHw").checked||s.isHw); }
 function passes(s,skip){
   if($("cHw").checked && !s.isHw) return false;
   const q=$("q").value.trim().toUpperCase();
-  if(q && !(s.id+" "+s.name+" "+s.dir+" "+s.distrito).toUpperCase().includes(q)) return false;
+  if(q && !(s.id+" "+s.name+" "+s.funcLoc+" "+s.dir+" "+s.distrito).toUpperCase().includes(q)) return false;
+  if(IDSET && !IDSET.has(s.id.toUpperCase())) return false;
+  if(VALF && !VALS.find(v=>v.k===VALF).fn(s)) return false;
+  if(NEAR){ if(!s.hasCoord) return false; s._d=hav(NEAR.lat,NEAR.lon,s.latN,s.lonN); if(s._d>NEAR.r) return false; }
   for(const f of FILTERS){ if(f.id===skip) continue; const set=SELF[f.id]; if(set.size && !f.get(s).some(v=>set.has(v))) return false; }
   for(const k of QON){ if(k===skip) continue; if(!QUICK.find(x=>x.k===k).fn(s)) return false; }
   return true;
@@ -632,6 +751,34 @@ CAPAS[capaActual].addTo(map);
 L.control.layers(CAPAS,null,{position:"topright"}).addTo(map);
 map.on("baselayerchange",e=>lsSet("hdv_capa2",e.name));
 const layer=L.layerGroup().addTo(map); let selRing=null, TOP_TOR=[];
+const HAS_CLUSTER=typeof L.markerClusterGroup==="function";
+const clusterGroup=HAS_CLUSTER?L.markerClusterGroup({chunkedLoading:true,showCoverageOnHover:false,spiderfyOnMaxZoom:true,maxClusterRadius:55,
+  iconCreateFunction:c=>{ const ch=c.getAllChildMarkers(), n=ch.length, t={}; ch.forEach(m=>{ const k=m.options.fillColor; t[k]=(t[k]||0)+1; });
+    const col=Object.keys(t).sort((a,b)=>t[b]-t[a])[0], sz=n<10?30:n<100?36:n<1000?44:52;
+    return L.divIcon({className:"",iconSize:[sz,sz],html:`<div class="clu" style="--c:${col};width:${sz}px;height:${sz}px">${n.toLocaleString()}</div>`}); }}):null;
+const nearLayer=L.layerGroup().addTo(map), routeLayer=L.layerGroup().addTo(map);
+if(!HAS_CLUSTER){ MODE="puntos"; }
+function setMode(m){ MODE=(m==="cluster"&&HAS_CLUSTER)?"cluster":"puntos"; lsSet("hdv_modo",MODE);
+  document.querySelectorAll(".seg2 button").forEach(b=>b.classList.toggle("on",b.dataset.m===MODE)); if(SITES.length) renderMap(false); }
+document.querySelectorAll(".seg2 button").forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+if(!HAS_CLUSTER) document.querySelector(".seg2").style.display="none";
+/* Abre la burbuja del site; en vista agrupada primero abre el grupo que lo contiene */
+function openSitePopup(s){
+  if(!s||!s.hasCoord) return;
+  const open=()=>{ const pp=L.popup({className:"sitepop",maxWidth:340,minWidth:320,autoPanPadding:[50,50],offset:[0,-4]}).setLatLng([s.latN,s.lonN]).setContent(popupHtml(s)).openOn(map); wirePopup(pp.getElement(),s); };
+  if(MODE==="cluster"&&s.mk&&clusterGroup&&clusterGroup.hasLayer(s.mk)) clusterGroup.zoomToShowLayer(s.mk,open); else open();
+}
+/* Si hay varios puntos casi encima (menos de 12 px), muestra una lista para elegir */
+function onMarkerClick(s,e){
+  if(e.target&&e.target.closeTooltip) e.target.closeTooltip();
+  const pt=map.latLngToContainerPoint(e.latlng);
+  const near=VIEW.filter(x=>x.hasCoord&&x.mk&&map.hasLayer(x.mk)&&map.latLngToContainerPoint([x.latN,x.lonN]).distanceTo(pt)<12);
+  if(near.length<=1){ select(s,false,false); openSitePopup(s); return; }
+  near.sort(SORTS.id);
+  const html=`<div class="chooser"><div class="ch-head">${near.length} sites en este punto</div>${near.map((x,i)=>`<button data-i="${i}"><span class="dot" style="background:${x.color};margin:0"></span><span><b>${esc(x.id)}</b> ${esc(x.name)}<small>${esc(x.autMin!==null?"Autonomía "+fmtMin(x.autMin):"Sin autonomía")}</small></span></button>`).join("")}</div>`;
+  const pp=L.popup({className:"sitepop",maxWidth:340,minWidth:300,offset:[0,-4]}).setLatLng(e.latlng).setContent(html).openOn(map);
+  pp.getElement().querySelectorAll(".chooser button").forEach(b=>b.onclick=()=>{ const x=near[+b.dataset.i]; select(x,false,false); openSitePopup(x); });
+}
 
 /* Colores: categóricos en orden fijo (s1-s3), estados reservados para riesgo/autonomía */
 function colorOf(s){
@@ -644,17 +791,18 @@ function colorOf(s){
 }
 function renderMap(fit){
   const cnt={}; VIEW.forEach(s=>{ if(s.torrera) cnt[s.torrera]=(cnt[s.torrera]||0)+1; }); TOP_TOR=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]).slice(0,3);
-  layer.clearLayers(); const leg={}, surf=cssv("--surface");
+  layer.clearLayers(); if(clusterGroup) clusterGroup.clearLayers(); const leg={}, surf=cssv("--surface"), mks=[];
   for(const s of VIEW){
     const [v,lbl]=colorOf(s); s.color=cssv(v); (leg[lbl]=leg[lbl]||{c:s.color,n:0}).n++;
     s.mk=null; if(!s.hasCoord) continue;
     const mk=L.circleMarker([s.latN,s.lonN],{radius:6,color:surf,weight:1.5,fillColor:s.color,fillOpacity:.95});
     mk.bindTooltip(`<b>${esc(s.id)}</b> ${esc(s.name)}`,{direction:"top",offset:[0,-4]});
-    mk.bindPopup(()=>popupHtml(s),{className:"sitepop",maxWidth:330,minWidth:320,autoPanPadding:[50,50]});
-    mk.on("popupopen",e=>wirePopup(e.popup.getElement(),s));
-    mk.on("click",()=>select(s,false,false));
-    mk.addTo(layer); s.mk=mk;
+    mk.on("click",e=>onMarkerClick(s,e));
+    mks.push(mk); s.mk=mk;
   }
+  if(MODE==="cluster"&&clusterGroup){ if(map.hasLayer(layer)) map.removeLayer(layer); if(!map.hasLayer(clusterGroup)) map.addLayer(clusterGroup); clusterGroup.addLayers(mks); }
+  else { if(clusterGroup&&map.hasLayer(clusterGroup)) map.removeLayer(clusterGroup); if(!map.hasLayer(layer)) map.addLayer(layer); mks.forEach(m=>m.addTo(layer)); }
+  drawNear(); drawRoute();
   $("legend").innerHTML=Object.entries(leg).sort((a,b)=>b[1].n-a[1].n).map(([l,o])=>`<div class="li"><span class="sw" style="background:${o.c}"></span>${esc(l)}<span class="n">${o.n.toLocaleString()}</span></div>`).join("");
   if(SEL&&SEL.hasCoord&&VIEW.includes(SEL)) drawRing(SEL); else if(selRing){ map.removeLayer(selRing); selRing=null; }
   if(fit) fitView();
@@ -662,7 +810,7 @@ function renderMap(fit){
 function fitView(){ const pts=VIEW.filter(s=>s.hasCoord).map(s=>[s.latN,s.lonN]); if(pts.length) map.fitBounds(pts,{padding:[50,50],maxZoom:15}); }
 function drawRing(s){ if(selRing) map.removeLayer(selRing); selRing=L.marker([s.latN,s.lonN],{interactive:false,keyboard:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="pulse"><i></i><i></i></div>'})}).addTo(map); }
 $("bFit").onclick=fitView;
-$("bSel").onclick=()=>{ if(SEL&&SEL.hasCoord){ map.setView([SEL.latN,SEL.lonN],Math.max(map.getZoom(),16)); SEL.mk&&SEL.mk.openPopup(); } };
+$("bSel").onclick=()=>{ if(SEL&&SEL.hasCoord){ map.setView([SEL.latN,SEL.lonN],Math.max(map.getZoom(),16)); openSitePopup(SEL); } };
 
 /* ================= Textos de la ficha ================= */
 function txtLlave(s){ if(s.ll.no) return "No requiere"; return s.ll.items.map(i=>i.sede+(i.n?" (llavero "+i.n+")":"")).join(" / "); }
@@ -686,13 +834,16 @@ function cell(lbl,v){ return `<div><small>${esc(lbl)}</small><strong title="${es
 function popupHtml(s){
   const pct=s.autMin===null?0:Math.min(100,s.autMin/480*100), ac=autColor(s), tags=tagsOf(s);
   return `<div style="--pp-c:${s.color}">
-    <div class="pp-head"><h4>${esc(s.name)}</h4><div>${esc(s.id)}${s.distrito?", "+esc(s.distrito):""}</div></div>
+    <div class="pp-head"><h4>${esc(s.name)}</h4><div>${esc(s.id)}${s.distrito?", "+esc(s.distrito):""}</div>${s.funcLoc?`<div class="pp-fl">Nombre en la torrera: <b>${esc(s.funcLoc)}</b></div>`:""}</div>
     <div class="pp-aut"><div><small>Autonomía${s.autF?`, medida el ${fmtFecha(s.autF)}`:""}</small><b style="color:${ac}">${s.autMin===null?"Sin dato":fmtMin(s.autMin)}</b></div><div class="gauge" title="Escala de 0 a 8 h"><i style="width:${pct}%;background:${ac}"></i></div></div>
     <div class="pp-grid">${cell("Torrera",s.torrera)}${cell("Llave en",txtLlave(s))}${cell("Acceso",s.acc.mech.join(", "))}${cell("Gestión",s.acc.gest.join(", "))}${cell("Horario",s.hor.txt)}${cell("Escalera",txtEsc(s))}${cell("Tiempo de llegada",s.lleg?s.lleg+" min":"")}${cell("GE a instalar",s.geCap)}</div>
     ${tags?`<div class="pp-tags">${tags}</div>`:""}
-    <div class="pp-act"><button class="pri" data-a="ficha">${ICON.doc}Ver ficha</button><button data-a="wsp">${ICON.chat}WhatsApp</button>${s.hasCoord?`<a href="${gmapsUrl(s)}" target="_blank" rel="noopener" title="Abre Google Maps con el site como destino. La ruta parte de la ubicación de quien abre el enlace.">${ICON.nav}Cómo llegar</a>`:""}</div></div>`;
+    <div class="pp-act"><button class="pri" data-a="ficha">${ICON.doc}Ver ficha</button><button data-a="wsp">${ICON.chat}WhatsApp</button>${s.hasCoord?`<a href="${gmapsUrl(s)}" target="_blank" rel="noopener" title="Abre Google Maps con el site como destino. La ruta parte de la ubicación de quien abre el enlace.">${ICON.nav}Cómo llegar</a>`:""}</div>
+    ${s.hasCoord?`<div class="pp-act" style="padding-top:0"><button data-a="ruta">${ICON.route}${ROUTE.includes(s)?"Quitar de la ruta":"Agregar a la ruta"}</button><button data-a="radio">${ICON.near}Sites a ${$("rKm").value} km</button></div>`:""}</div>`;
 }
-function wirePopup(el,s){ el.querySelector('[data-a="ficha"]').onclick=()=>{ select(s,false,false); switchTab("fic"); }; el.querySelector('[data-a="wsp"]').onclick=()=>copyWsp(s); }
+function wirePopup(el,s){ el.querySelector('[data-a="ficha"]').onclick=()=>{ select(s,false,false); switchTab("fic"); }; el.querySelector('[data-a="wsp"]').onclick=()=>copyWsp(s);
+  const r=el.querySelector('[data-a="ruta"]'); if(r) r.onclick=()=>{ toggleRoute(s); map.closePopup(); };
+  const k=el.querySelector('[data-a="radio"]'); if(k) k.onclick=()=>{ map.closePopup(); setNear(s.latN,s.lonN,+$("rKm").value,s.id); }; }
 
 /* ================= Lista ================= */
 const SORTS={
@@ -700,55 +851,73 @@ const SORTS={
   aut:(a,b)=>(a.autMin??1e9)-(b.autMin??1e9)||a.id.localeCompare(b.id,"es",{numeric:true}),
   comp:(a,b)=>a.comp-b.comp||a.id.localeCompare(b.id,"es",{numeric:true}),
   lleg:(a,b)=>(b.lleg??-1)-(a.lleg??-1)||a.id.localeCompare(b.id,"es",{numeric:true}),
-  fm:(a,b)=>a.fm.localeCompare(b.fm)||a.id.localeCompare(b.id,"es",{numeric:true})
+  fm:(a,b)=>a.fm.localeCompare(b.fm)||a.id.localeCompare(b.id,"es",{numeric:true}),
+  dist:(a,b)=>(a._d??1e9)-(b._d??1e9)
 };
 function renderList(){
   const el=$("list");
   if(!VIEW.length){ el.innerHTML='<div class="empty">Ningún site cumple los filtros. Usa "Limpiar filtros" para volver a verlos todos.</div>'; return; }
   const sb=$("sortBy").value, sorted=[...VIEW].sort(SORTS[sb]), lim=300, rows=sorted.slice(0,lim);
-  const right=s=>sb==="lleg"?(s.lleg?s.lleg+" min":"sin dato"):sb==="comp"?Math.round(s.comp*100)+"%":(s.autMin!==null?fmtMin(s.autMin):"sin autonomía");
-  el.innerHTML=rows.map((s,i)=>`<div class="it${SEL===s?" sel":""}" data-i="${i}" tabindex="0"><span class="dot" style="background:${s.color}"></span>
-    <div><div class="nm">${esc(s.id)} ${esc(s.name)}</div><div class="m">${esc([s.distrito,s.fm].filter(Boolean).join(", "))}</div><div>${tagsOf(s)}</div></div><div class="pc">${esc(right(s))}</div></div>`).join("")
+  const right=s=>sb==="dist"&&s._d!=null?s._d.toFixed(1)+" km":sb==="lleg"?(s.lleg?s.lleg+" min":"sin dato"):sb==="comp"?Math.round(s.comp*100)+"%":(s.autMin!==null?fmtMin(s.autMin):"sin autonomía");
+  el.innerHTML=rows.map((s,i)=>`<div class="it${SEL===s?" sel":""}" data-i="${i}" data-id="${esc(s.id)}" tabindex="0"><span class="dot" style="background:${s.color}"></span>
+    <div><div class="nm">${esc(s.id)} ${esc(s.name)}</div>${s.funcLoc?`<div class="m fl2">Torrera: ${esc(s.funcLoc)}</div>`:""}<div class="m">${esc([s.distrito,s.fm].filter(Boolean).join(", "))}</div><div>${tagsOf(s)}</div></div><div class="pc">${esc(right(s))}</div></div>`).join("")
     +(sorted.length>lim?`<div class="empty">Se muestran ${lim} de ${sorted.length.toLocaleString()}. Usa la búsqueda o los filtros para acotar.</div>`:"");
   el.querySelectorAll(".it").forEach(d=>{ const go=()=>select(rows[+d.dataset.i],true,true); d.onclick=go; d.onkeydown=e=>{ if(e.key==="Enter") go(); }; });
 }
 $("sortBy").value=lsGet("hdv_sort","id"); if(!$("sortBy").value) $("sortBy").value="id";
-$("sortBy").onchange=()=>{ lsSet("hdv_sort",$("sortBy").value); renderList(); };
+$("sortBy").onchange=()=>{ lsSet("hdv_sort",$("sortBy").value); renderList(); if(CUR_VIEW==="vTablero") renderTablero(); };
 
 /* ================= Ficha ================= */
-function kv(lbl,col,v,nstd){ const has=v!==undefined&&v!==null&&String(v)!=="";
-  return `<div class="k">${esc(lbl)}${col?`<u>${esc(col)}</u>`:""}</div><div class="v">${has?esc(v):'<span class="miss">Falta</span>'}${has&&nstd?'<span class="nstd" title="El valor no sigue el formato acordado">por normalizar</span>':""}</div>`; }
+function kv(lbl,col,v,nstd,cp){ const has=v!==undefined&&v!==null&&String(v)!=="";
+  return `<div class="k">${esc(lbl)}${col?`<u>${esc(col)}</u>`:""}</div><div class="v">${has?esc(v):'<span class="miss">Falta</span>'}${has&&nstd?'<span class="nstd" title="El valor no sigue el formato acordado">por normalizar</span>':""}${has&&cp?`<button class="cp" data-copy="${esc(cp===true?v:cp)}" title="Copiar ${esc(lbl.toLowerCase())}" aria-label="Copiar ${esc(lbl.toLowerCase())}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 8h12v12H8zM4 16V4h12"/></svg></button>`:""}</div>`; }
 function nearby(s,n=5){ if(!s.hasCoord) return []; return SITES.filter(x=>x!==s&&x.hasCoord&&x.isHw===s.isHw).map(x=>({x,d:hav(s.latN,s.lonN,x.latN,x.lonN)})).sort((a,b)=>a.d-b.d).slice(0,n); }
 function select(s,pan,openPop){
-  SEL=s; showFicha(s); $("bSel").style.display=s.hasCoord?"":"none";
-  document.querySelectorAll("#list .it").forEach(d=>d.classList.remove("sel"));
-  if(s.hasCoord){ drawRing(s); if(pan) map.setView([s.latN,s.lonN],Math.max(map.getZoom(),15)); if(openPop&&s.mk) setTimeout(()=>s.mk.openPopup(),pan?250:0); }
+  SEL=s; pushHist(s); $("bSel").style.display=s.hasCoord?"":"none";
+  document.querySelectorAll("#list .it, .tlist tr").forEach(d=>d.classList.toggle("sel",d.dataset.id===s.id));
+  if(s.hasCoord) drawRing(s);
+  if(CUR_VIEW==="vMapa"){
+    mountFicha($("p-fic"),s);
+    if(s.hasCoord){ if(pan) map.setView([s.latN,s.lonN],Math.max(map.getZoom(),15)); if(openPop) setTimeout(()=>openSitePopup(s),pan?250:0); }
+  } else openDrawer(s);
 }
+let HIST=lsGet("hdv_hist",[]);
+function pushHist(s){ HIST=[s.id,...HIST.filter(x=>x!==s.id)].slice(0,10); lsSet("hdv_hist",HIST); }
+function renderRec(){ const m=new Map(SITES.map(x=>[x.id,x])), rows=HIST.map(id=>m.get(id)).filter(Boolean);
+  $("recList").innerHTML=rows.length?rows.map((x,i)=>`<label data-i="${i}" style="cursor:pointer"><span class="dot" style="background:${x.color||"var(--none)"};margin:0"></span><span><b>${esc(x.id)}</b> ${esc(x.name)}</span><span class="c">${x.autMin!==null?fmtMin(x.autMin):""}</span></label>`).join(""):'<div class="empty" style="padding:14px">Aún no abres ningún site.</div>';
+  $("recList").querySelectorAll("label").forEach(l=>l.onclick=()=>{ closeAllMs(); const x=rows[+l.dataset.i]; if(CUR_VIEW==="vMapa") select(x,true,true); else select(x,false,false); }); }
+$("bRec").onclick=e=>{ e.stopPropagation(); const el=$("ms-rec"), op=!el.classList.contains("open"); closeAllMs(); if(op){ renderRec(); el.classList.add("open"); } };
+$("ms-rec").querySelector(".pop").onclick=e=>e.stopPropagation();
+function openDrawer(s){ mountFicha($("drawerBody"),s); $("drawer").classList.add("on"); }
+function closeDrawer(){ $("drawer").classList.remove("on"); }
+function remountFicha(){ if(!SEL) return; if($("drawer").classList.contains("on")) mountFicha($("drawerBody"),SEL); else mountFicha($("p-fic"),SEL); }
+$("dClose").onclick=closeDrawer;
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeDrawer(); });
 function resumen(s){
   const it=[["Región",s.region],["FM Office",[s.fm,s.fm2].filter(Boolean).join(" / ")],["Departamento",s.dep],["Provincia",s.prov],["Distrito",s.distrito],["Tipo de site",s.tipoSite],
-    ["Prioridad",s.prio],["Estado",s.estado],["Tecnologías",s.tech],["Transporte",s.transp],["Torrera",s.torrera],["Energía",s.energia],
+    ["Prioridad",s.prio],["Estado",s.estado],["Tecnologías",s.tech],["Transporte",s.transp],["Torrera",s.torrera],["Nombre en la torrera",s.funcLoc],["Energía",s.energia],
     ["Contratista",s.contratista],["Importancia",[/^YES$/i.test(s.vip)?"VIP":"",/IMPORTANT/i.test(s.importante)?"Sitio importante":""].filter(Boolean).join(", ")||"Regular"],
     ["Jefe Huawei",s.jefeHw],["Jefe cooperador",s.jefeCoop]];
   return `<div class="sum">${it.map(([k,v])=>`<div><small>${esc(k)}</small><span title="${esc(v)}">${v?esc(v):"—"}</span></div>`).join("")}</div>`;
 }
-function showFicha(s){
-  const pc=Math.round(s.comp*100), rc=s.comp>=0.8?cssv("--good"):s.comp>=0.5?cssv("--warning"):cssv("--critical"), near=nearby(s);
-  let h=`<div class="fhead"><div class="row"><div><h2>${esc(s.name)}</h2><div class="id">${esc(s.id)}, ${esc(s.fm||"sin FM Office")}${s.prio?", "+esc(s.prio):""}</div><div>${tagsOf(s)}</div></div>
+function fichaHtml(s,near){
+  const pc=Math.round(s.comp*100), rc=s.comp>=0.8?cssv("--good"):s.comp>=0.5?cssv("--warning"):cssv("--critical");
+  let h=`<div class="fhead"><div class="row"><div><h2>${esc(s.name)}</h2>${s.funcLoc?`<div class="fl">En la torrera: <b>${esc(s.funcLoc)}</b></div>`:""}<div class="id">${esc(s.id)}, ${esc(s.fm||"sin FM Office")}${s.prio?", "+esc(s.prio):""}</div><div>${tagsOf(s)}</div></div>
      <div class="ring" data-p="${pc}" style="--p:0;--rc:${rc}" title="Completitud de la ficha"><span>${pc}%</span></div></div>
-     <div class="actions"><button class="abtn pri" id="bWsp">${ICON.chat}Copiar ficha</button><button class="abtn" id="bPlant">${ICON.doc}Copiar plantilla</button>${s.hasCoord?`<a class="abtn" href="${gmapsUrl(s)}" target="_blank" rel="noopener">${ICON.nav}Cómo llegar</a>`:""}</div>
+     <div class="actions"><button class="abtn pri" data-act="wsp">${ICON.chat}Copiar ficha</button><button class="abtn" data-act="wspc">${ICON.chat}Copiar resumen</button><button class="abtn" data-act="plant">${ICON.doc}Copiar plantilla</button>${s.hasCoord?`<a class="abtn" href="${gmapsUrl(s)}" target="_blank" rel="noopener">${ICON.nav}Cómo llegar</a>`:""}</div>
+     <div class="actions sm">${s.hasCoord?`<button class="abtn" data-act="ruta">${ICON.route}${ROUTE.includes(s)?"Quitar de la ruta":"Agregar a la ruta"}</button><button class="abtn" data-act="radio">${ICON.near}Sites a ${$("rKm").value} km</button>`:""}<button class="abtn" data-act="print">${ICON.print}Imprimir / PDF</button>${CUR_VIEW!=="vMapa"?`<button class="abtn" data-act="vermapa">${ICON.map}Ver en el mapa</button>`:""}</div>
      ${s.hasCoord?'<div class="hint">"Cómo llegar" abre Google Maps con el site como destino. La ruta parte de la ubicación actual de quien abre el enlace: en el celular del técnico, desde donde él está.</div>':""}</div>`;
   h+=resumen(s);
   if(s.missing.length) h+=`<div class="missing"><b>Falta completar en Autin:</b> ${s.missing.map(c=>`${esc(c.lbl)} <span style="opacity:.75">(${esc(c.col)})</span>`).join(", ")}.</div>`;
   h+=`<div class="sec"><h3>${ICON.pin}Llegada</h3><div class="kv">
-    ${kv("Dirección","Site address",s.dir)}
-    ${kv("Coordenadas","Longitude / Latitude",s.hasCoord?`${s.latN.toFixed(6)}, ${s.lonN.toFixed(6)}${s.swapped?" (invertidas en Autin)":""}`:"",s.swapped)}
+    ${kv("Dirección","Site address",s.dir,false,true)}
+    ${kv("Coordenadas","Longitude / Latitude",s.hasCoord?`${s.latN.toFixed(6)}, ${s.lonN.toFixed(6)}${s.swapped?" (invertidas en Autin)":""}`:"",s.swapped,s.hasCoord?`${s.latN.toFixed(6)}, ${s.lonN.toFixed(6)}`:false)}
     ${kv("Tiempo de llegada","Tiempo de llegada",s.lleg?s.lleg+" min":"",s.lleg===90)}</div>
     ${s.lleg===90?'<div class="hint">90 min es el valor por defecto en la mayoría de sites; hay que validarlo con el supervisor.</div>':""}</div>`;
   h+=`<div class="sec"><h3>${ICON.key}Acceso</h3><div class="kv">
-    ${kv("Torrera","Torrera",s.torrera)}${kv("Llave en","Ubicación de llaves",txtLlave(s))}
+    ${kv("Torrera","Torrera",s.torrera)}${s.torrera.toUpperCase()!=="CLARO"||s.funcLoc?kv("Nombre en la torrera","Functional location",s.funcLoc,false,true):""}${kv("Llave en","Ubicación de llaves",txtLlave(s))}
     ${kv("Mecanismo","Tipo de acceso",s.acc.mech.join(", "),!s.acc.std)}${kv("Gestión","Tipo de acceso",s.acc.gest.join(", ")+(s.acc.otros.length?` (otros: ${s.acc.otros.join(", ")})`:""),!s.acc.std)}
     ${kv("Horario","Life cycle",s.hor.txt)}${kv("Anticipación","Life cycle",s.hor.antic?s.hor.antic+" h":"")}
-    ${kv("Contacto","Nombre / Móvil responsable",[s.cNom,s.cTel].filter(Boolean).join(", "))}${kv("Correo","Dirección reponsable",s.cMail)}
+    ${kv("Contacto","Nombre / Móvil responsable",[s.cNom,s.cTel].filter(Boolean).join(", "),false,s.cTel||true)}${kv("Correo","Dirección reponsable",s.cMail,false,true)}
     ${kv("Acceso complicado","Access Issue",s.accIssue?"Sí":"")}</div>
     ${s.det?`<div class="hint" style="margin-top:8px">Detalle acceso</div><div class="raw" style="margin-top:2px">${esc(s.det)}</div>`:""}</div>`;
   h+=`<div class="sec"><h3>${ICON.shield}Seguridad</h3><div class="kv">${kv("Zona contingente","Dangerous Site",s.danger?"Sí":(s.dangerSet?"No (sin validar si es el valor por defecto)":""))}</div></div>`;
@@ -769,10 +938,18 @@ function showFicha(s){
   if(pk.length) h+=`<div class="sec"><h3>${ICON.text}Pistas en el texto actual</h3><div class="kv">${pk.map(k=>kv(k[0].toUpperCase()+k.slice(1),"","…"+s.pistas[k]+"…")).join("")}</div><div class="hint">Estas frases están en los comentarios de Autin; conviene pasarlas a su columna.</div></div>`;
   if(near.length) h+=`<div class="sec"><h3>${ICON.near}Sites más cercanos</h3><div class="near">${near.map((o,i)=>`<button data-n="${i}"><span><b>${esc(o.x.id)}</b> ${esc(o.x.name)}</span><span style="color:var(--muted);white-space:nowrap">${o.d.toFixed(1)} km</span></button>`).join("")}</div></div>`;
   h+='<div style="height:16px"></div>';
-  $("p-fic").innerHTML=h; $("p-fic").scrollTop=0;
-  $("bWsp").onclick=()=>copyWsp(s); $("bPlant").onclick=()=>copyPlantilla(s);
-  animateIn($("p-fic"));
-  $("p-fic").querySelectorAll(".near button").forEach(b=>b.onclick=()=>select(near[+b.dataset.n].x,true,true));
+  return h;
+}
+function mountFicha(box,s){
+  const near=nearby(s); box.innerHTML=fichaHtml(s,near); box.scrollTop=0;
+  const on=(a,fn)=>{ const b=box.querySelector(`[data-act="${a}"]`); if(b) b.onclick=fn; };
+  on("wsp",()=>copyWsp(s)); on("wspc",()=>copyText(fichaCorta(s),"Resumen copiado para WhatsApp")); on("plant",()=>copyPlantilla(s)); on("print",()=>printFicha(s));
+  box.querySelectorAll(".cp").forEach(b=>b.onclick=()=>copyText(b.dataset.copy,"Copiado: "+b.dataset.copy.slice(0,40)));
+  on("ruta",()=>{ toggleRoute(s); remountFicha(); });
+  on("radio",()=>{ closeDrawer(); setNear(s.latN,s.lonN,+$("rKm").value,s.id); });
+  on("vermapa",()=>{ closeDrawer(); setView("vMapa"); setTimeout(()=>{ select(s,true,true); switchTab("fic"); },60); });
+  box.querySelectorAll(".near button").forEach(b=>b.onclick=()=>select(near[+b.dataset.n].x,true,true));
+  animateIn(box);
 }
 let DATA_FECHA="";
 function copyText(txt,msg){
@@ -783,6 +960,7 @@ function copyText(txt,msg){
 function fichaWsp(s){
   const out=[], sec=(t,items)=>{ const v=items.filter(x=>x[1]!==undefined&&x[1]!==null&&String(x[1]).trim()!==""); if(!v.length) return; out.push("",t); v.forEach(([k,x])=>out.push(`▪️ *${k}:* ${x}`)); };
   out.push(`🗼 *${s.id} – ${s.name}*`);
+  if(s.funcLoc) out.push(`🏷️ *Nombre en la torrera:* ${s.funcLoc}`);
   out.push(`_${[s.fm,s.prio,s.tipoSite].filter(Boolean).join(" | ")}_`);
   const al=[]; if(s.danger) al.push("🚨 ZONA CONTINGENTE"); if(s.accIssue) al.push("⛔ ACCESO COMPLICADO"); if(s.autMin!==null&&s.autMin<240) al.push(`🔋 AUTONOMÍA BAJA (${fmtMin(s.autMin)})`); if(s.autMin===null) al.push("🔋 SIN DATO DE AUTONOMÍA");
   if(al.length) out.push("",al.map(a=>`*${a}*`).join("\n"));
@@ -798,6 +976,17 @@ function fichaWsp(s){
   return out.join("\n");
 }
 function copyWsp(s){ copyText(fichaWsp(s),"Ficha copiada para WhatsApp"); }
+/* Versión corta: solo lo necesario para llegar e ingresar */
+function fichaCorta(s){
+  const L=[`🗼 *${s.id} – ${s.name}*`]; if(s.funcLoc) L.push(`_En la torrera: ${s.funcLoc}_`);
+  const al=[]; if(s.danger) al.push("🚨 ZONA CONTINGENTE"); if(s.accIssue) al.push("⛔ ACCESO COMPLICADO"); if(s.autMin!==null&&s.autMin<240) al.push(`🔋 AUTONOMÍA ${fmtMin(s.autMin)}`); if(s.autMin===null) al.push("🔋 SIN DATO DE AUTONOMÍA");
+  if(al.length) L.push(al.map(a=>`*${a}*`).join("  "));
+  const add=(k,v)=>{ if(v&&String(v).trim()) L.push(`▪️ *${k}:* ${v}`); };
+  add("Dirección",[s.dir,s.distrito].filter(Boolean).join(", ")); if(s.hasCoord) add("Ruta",gmapsUrl(s));
+  add("Llave",txtLlave(s)); add("Ingreso",[s.acc.mech.join(", "),s.acc.gest.join(", ")].filter(Boolean).join(" | ")); add("Horario",s.hor.txt);
+  add("Contacto",[s.cNom,s.cTel].filter(Boolean).join(" – ")); add("Escalera",txtEsc(s)==="No"?"":txtEsc(s));
+  return L.join("\n");
+}
 /* Plantilla que HD envía al técnico. Etiquetas fijas para poder normalizar las respuestas después. */
 function plantillaWsp(s){
   const cur=(v)=>v?` _(hoy: ${String(v).replace(/\s+/g," ").slice(0,60)})_`:" ⚠️";
@@ -813,6 +1002,7 @@ function plantillaWsp(s){
   f("INGRESO","LLAVE / ILOQ / CANDADO ELECTRONICO / MULTILOCK / ACCESO DIRECTO",s&&s.acc.mech.join(", "));
   f("TRÁMITE","CARTA / CORREO / LLAMADA / PORTAL / SCTR",s&&s.acc.gest.join(", "));
   f("HORARIO DE ACCESO","días y horas; anticipación",s&&s.hor.txt);
+  f("NOMBRE EN LA TORRERA","nombre o código del site para la torrera",s&&s.funcLoc);
   f("CONTACTO DE ACCESO","nombre y teléfono",s&&[s.cNom,s.cTel].filter(Boolean).join(" "));
   f("ACCESO COMPLICADO","SI / NO y por qué",s&&(s.accIssue?"SI":""));
   f("ZONA CONTINGENTE","SI / NO",s&&(s.danger?"SI":""));
@@ -848,7 +1038,7 @@ function barList(fid,counts,opts={}){
 const AUT_B=[["Menos de 1 h","--critical",s=>s.autMin!==null&&s.autMin<60],["De 1 a 4 h","--serious",s=>s.autMin!==null&&s.autMin>=60&&s.autMin<240],["4 h o más","--good",s=>s.autMin!==null&&s.autMin>=240],["Sin dato","--none",s=>s.autMin===null]];
 function stackRows(groups){
   return Object.entries(groups).sort((a,b)=>b[1].length-a[1].length).map(([k,arr])=>{
-    const n=arr.length, segs=AUT_B.map(([l,c,fn])=>{ const v=arr.filter(fn).length; return v?`<i style="width:${v/n*100}%;background:${cssv(c)}" data-tip="${esc(k)}, ${l}: ${v} de ${n} sites (${Math.round(v/n*100)}%)"></i>`:""; }).join("");
+    const n=arr.length, segs=AUT_B.map(([l,c,fn])=>{ const v=arr.filter(fn).length; return v?`<i style="width:${v/n*100}%;background:${cssv(c)}" data-seg="${l}" data-fmv="${esc(k)}" data-tip="${esc(k)}, ${l}: ${v} de ${n} sites (${Math.round(v/n*100)}%). Clic para ver solo estos"></i>`:""; }).join("");
     const crit=arr.filter(s=>s.autMin!==null&&s.autMin<240).length;
     return `<button class="hb${SELF.fm.has(k)?" on":""}" data-f="fm" data-v="${esc(k)}"><span class="lb" title="${esc(k)}">${esc(k.replace(/^HUAWEI\s+/,""))}</span><span class="tr stack">${segs}</span><span class="vl" title="Sites con menos de 4 h / total">${crit} / ${n}</span></button>`; }).join("");
 }
@@ -867,18 +1057,38 @@ function renderTablero(){
   el.innerHTML=`
    <div class="tiles">${tiles.join("")}</div>
    <div class="grid">
-     <div class="panel"><h3>Autonomía por FM Office</h3><p class="sub">Reparto de sites por rango de autonomía. A la derecha, sites con menos de 4 h sobre el total. Clic en una fila para filtrar esa FM Office.</p>
-       <div class="lgd">${AUT_B.map(([l,c])=>`<span><i style="background:${cssv(c)}"></i>${l}</span>`).join("")}</div>${stackRows(fmG)}</div>
+     <div class="panel"><h3>Autonomía por FM Office</h3><p class="sub">Reparto de sites por rango de autonomía. A la derecha, sites con menos de 4 h sobre el total. Clic en un tramo de color para ver solo esos sites; clic en el nombre para filtrar la FM Office.</p>
+       <div class="lgd">${AUT_B.map(([l,c])=>`<button class="lgb${SELF.aut.has(l)?" on":""}" data-f="aut" data-v="${l}" title="Filtrar por este rango"><i style="background:${cssv(c)}"></i>${l}</button>`).join("")}</div>${stackRows(fmG)}</div>
      <div class="panel"><h3>Cómo se ingresa</h3><p class="sub">Mecanismo de acceso según "Tipo de acceso". Un site puede tener más de uno.</p>${barList("mec",countBy(V,G("mec")))}</div>
      <div class="panel"><h3>Qué trámite pide el acceso</h3><p class="sub">Gestión indicada en "Tipo de acceso".</p>${barList("gest",countBy(V,G("gest")))}</div>
      <div class="panel"><h3>Dónde se recogen las llaves</h3><p class="sub">Sedes de "Ubicación llaves", las 10 más frecuentes.</p>${barList("sede",countBy(V,G("sede")))}</div>
      <div class="panel"><h3>Torreras</h3><p class="sub">Dueño de la infraestructura.</p>${barList("torrera",countBy(V,G("torrera")))}</div>
      <div class="panel"><h3>Tiempo de llegada</h3><p class="sub">Minutos desde la base del team. La barra de 90 min es casi toda valor por defecto.</p>${barList(null,lleg,{top:8,keepOrder:true})}</div>
      <div class="panel"><h3>Jefe Huawei</h3><p class="sub">Responsable de escalamiento.</p>${barList("jefe",countBy(V,G("jefe")))}</div>
-   </div>`;
-  el.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>toggleFilterValue(b.dataset.f,b.dataset.v));
+   </div>
+   ${tablaSites()}`;
+  el.querySelectorAll("[data-f]").forEach(b=>b.onclick=e=>{ const seg=e.target.closest("[data-seg]");
+    if(seg){ const same=SELF.fm.size===1&&SELF.fm.has(seg.dataset.fmv)&&SELF.aut.size===1&&SELF.aut.has(seg.dataset.seg);
+      SELF.fm.clear(); SELF.aut.clear(); if(!same){ SELF.fm.add(seg.dataset.fmv); SELF.aut.add(seg.dataset.seg); } refresh(true); return; }
+    toggleFilterValue(b.dataset.f,b.dataset.v); });
+  wireTablaSites(el);
   animateBars(el); countUp(el);
   el.querySelectorAll(".tile.click").forEach(t=>{ const go=()=>toggleQuick(t.dataset.q); t.onclick=go; t.onkeydown=e=>{ if(e.key==="Enter") go(); }; });
+}
+
+function tablaSites(){
+  const sb=$("sortBy").value, sorted=[...VIEW].sort(SORTS[sb]||SORTS.id), lim=200, rows=sorted.slice(0,lim);
+  window._tabRows=rows;
+  return `<div class="panel"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start">
+    <div><h3>Sites en vista (${VIEW.length.toLocaleString()})</h3><p class="sub">Los mismos sites que filtran los gráficos. Clic en una fila para abrir su ficha.</p></div>
+    <label class="hint" style="display:flex;gap:8px;align-items:center;margin:0">Ordenar por <select id="sortBy2">${[...$("sortBy").options].map(o=>`<option value="${o.value}"${o.value===sb?" selected":""}>${esc(o.text)}</option>`).join("")}</select></label></div>
+    <div class="tlist"><table class="tbl"><thead><tr><th></th><th>Site</th><th>FM Office</th><th>Distrito</th><th>Autonomía</th><th>Llegada</th><th>Completitud</th><th>Alertas</th></tr></thead><tbody>
+    ${rows.map((s,i)=>`<tr class="rowlink${SEL===s?" sel":""}" data-i="${i}" data-id="${esc(s.id)}"><td><span class="dot" style="background:${s.color};margin:2px 0 0"></span></td><td><b>${esc(s.id)}</b> ${esc(s.name)}${s.funcLoc?`<small class="fl2">Torrera: ${esc(s.funcLoc)}</small>`:""}</td><td>${esc(s.fm.replace(/^HUAWEI\s+/,""))}</td><td>${esc(s.distrito)}</td><td>${s.autMin!==null?fmtMin(s.autMin):'<span class="miss">Sin dato</span>'}</td><td>${s.lleg?s.lleg+" min":"—"}</td><td>${Math.round(s.comp*100)}%</td><td>${tagsOf(s)}</td></tr>`).join("")}
+    </tbody></table></div>${sorted.length>lim?`<p class="sub" style="margin:8px 0 0">Se muestran ${lim} de ${sorted.length.toLocaleString()}. Usa los filtros o la búsqueda para acotar.</p>`:""}</div>`;
+}
+function wireTablaSites(el){
+  el.querySelectorAll(".tlist tr.rowlink").forEach(r=>r.onclick=()=>select(window._tabRows[+r.dataset.i],false,false));
+  const s2=el.querySelector("#sortBy2"); if(s2) s2.onchange=()=>{ $("sortBy").value=s2.value; lsSet("hdv_sort",s2.value); renderList(); renderTablero(); };
 }
 
 /* ================= Calidad de datos ================= */
@@ -892,7 +1102,9 @@ function renderCalidad(){
   const el=$("vCalidad"); if(!SITES.length) return;
   const V=VIEW, fmG={}; V.forEach(s=>(fmG[s.fm||"(vacío)"]=fmG[s.fm||"(vacío)"]||[]).push(s));
   const rows=[["Total en vista",V],...Object.entries(fmG).sort((a,b)=>b[1].length-a[1].length)];
-  const cellOf=(arr,c)=>{ const ok=arr.filter(c.ok).length, p=ok/(arr.length||1), [bg,fg]=seqColor(p); return `<td class="c" style="background:${bg};color:${fg}" data-tip="${esc(c.lbl)}: ${Math.round(p*100)}% (${ok} de ${arr.length} sites)">${Math.round(p*100)}%</td>`; };
+  const cellOf=(arr0,c)=>{ const arr=c.applies?arr0.filter(c.applies):arr0; if(!arr.length) return '<td class="c" style="color:var(--muted)">n/a</td>';
+    const ok=arr.filter(c.ok).length, p=ok/arr.length, [bg,fg]=seqColor(p); return `<td class="c" style="background:${bg};color:${fg}" data-tip="${esc(c.lbl)}: ${Math.round(p*100)}% (${ok} de ${arr.length} sites${c.applies?" a los que aplica":""})">${Math.round(p*100)}%</td>`; };
+  const vb=VIEW_NOVAL();
   const worst=[...V].sort((a,b)=>a.comp-b.comp||a.id.localeCompare(b.id,"es",{numeric:true})).slice(0,100);
   el.innerHTML=`
    <div class="panel"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start">
@@ -903,18 +1115,36 @@ function renderCalidad(){
         return `<tr><td${i===0?' style="font-weight:600"':""}>${esc(k.replace(/^HUAWEI\s+/,""))} <span style="color:var(--muted)">(${arr.length})</span></td>${CRIT.map(c=>cellOf(arr,c)).join("")}<td class="c" style="background:${bg};color:${fg};font-weight:700">${Math.round(p*100)}%</td></tr>`; }).join("")}
      </tbody></table></div>
      <p class="sub" style="margin:10px 0 0">La lista de pendientes marca, para cada site en vista, qué dato falta y en qué campo del formulario de Autin se llena. Sirve para repartir el trabajo entre HD y los supervisores; los datos se actualizan editando el site en Autin.</p></div>
+   <div class="panel"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start">
+     <div><h3>Datos con formato a revisar</h3><p class="sub">Datos que existen pero no siguen la guía de llenado o parecen incorrectos. Clic en una fila para ver solo esos sites en todas las vistas.</p></div>
+     <button class="abtn" id="bVal">${ICON.doc}Descargar observaciones</button></div>
+     <table class="tbl"><thead><tr><th>Observación</th><th>Campo en Autin</th><th style="text-align:right">Sites</th><th></th></tr></thead><tbody>
+     ${VALS.map(v=>{ const n=vb.filter(v.fn).length; return `<tr class="rowlink${VALF===v.k?" sel":""}" data-v="${v.k}"><td>${esc(v.lbl)}</td><td style="color:var(--muted)">${esc(v.col)}</td><td style="text-align:right;font-weight:600">${n.toLocaleString()}</td><td style="text-align:right">${VALF===v.k?'<span class="tag info">Filtrado</span>':""}</td></tr>`; }).join("")}
+     </tbody></table></div>
    <div class="panel"><h3>Sites con la ficha más incompleta</h3><p class="sub">Los 100 con menor completitud dentro de la vista. Clic en una fila para abrir su ficha.</p>
      <table class="tbl"><thead><tr><th>Site</th><th>FM Office</th><th>Completitud</th><th>Falta</th></tr></thead><tbody>
      ${worst.map((s,i)=>`<tr class="rowlink" data-i="${i}"><td><b>${esc(s.id)}</b> ${esc(s.name)}</td><td>${esc(s.fm.replace(/^HUAWEI\s+/,""))}</td><td>${Math.round(s.comp*100)}%</td><td style="color:var(--muted)">${esc(s.missing.map(c=>c.lbl).join(", "))}</td></tr>`).join("")}
      </tbody></table></div>`;
   $("bExp").onclick=exportView; animateBars(el);
-  el.querySelectorAll("tr.rowlink").forEach(r=>r.onclick=()=>{ setView("vMapa"); select(worst[+r.dataset.i],true,true); switchTab("fic"); });
+  $("bVal").onclick=exportVal;
+  el.querySelectorAll("tr[data-v]").forEach(r=>r.onclick=()=>{ VALF=VALF===r.dataset.v?null:r.dataset.v; refresh(true); });
+  el.querySelectorAll("tr.rowlink[data-i]").forEach(r=>r.onclick=()=>select(worst[+r.dataset.i],false,false));
+}
+/* Sites en vista sin aplicar el filtro de validación (para contar cada observación) */
+function VIEW_NOVAL(){ const k=VALF; VALF=null; const r=SITES.filter(x=>passes(x,null)); VALF=k; return r; }
+function exportVal(){
+  const base=VIEW_NOVAL(), rows=[];
+  VALS.forEach(v=>base.filter(v.fn).forEach(s=>rows.push({"Site ID":s.id,"Site name":s.name,"FM Office":s.fm,"Observación":v.lbl,"Campo en Autin":v.col,"Valor actual":String(v.val(s)??"").slice(0,300)})));
+  if(!rows.length){ toast("No hay observaciones en la vista"); return; }
+  const ws=XLSX.utils.json_to_sheet(rows); ws["!cols"]=[{wch:14},{wch:28},{wch:26},{wch:46},{wch:24},{wch:60}];
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"observaciones");
+  XLSX.writeFile(wb,`observaciones_formato_${new Date().toISOString().slice(0,10)}.xlsx`); toast(`${rows.length.toLocaleString()} observaciones descargadas`);
 }
 function exportView(){
   if(!VIEW.length){ toast("No hay sites en la vista"); return; }
   const rows=[...VIEW].sort((a,b)=>a.fm.localeCompare(b.fm)||a.comp-b.comp).map(s=>{
     const o={"Site ID":s.id,"Site name":s.name,"FM Office":s.fm,"Jefe Huawei":s.jefeHw,"Completitud":Math.round(s.comp*100)+"%","Datos que faltan":s.missing.length};
-    CRIT.forEach(c=>o[`${c.lbl} [${c.col}]`]=c.ok(s)?"":"FALTA"); return o; });
+    CRIT.forEach(c=>o[`${c.lbl} [${c.col}]`]=(c.applies&&!c.applies(s))?"N/A":c.ok(s)?"":"FALTA"); return o; });
   const ws=XLSX.utils.json_to_sheet(rows); ws["!cols"]=[{wch:14},{wch:28},{wch:26},{wch:26},{wch:12},{wch:10},...CRIT.map(()=>({wch:16}))];
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"pendientes");
   XLSX.writeFile(wb,`pendientes_ficha_HD_${new Date().toISOString().slice(0,10)}.xlsx`); toast(`Lista de pendientes de ${rows.length.toLocaleString()} sites descargada`);
@@ -947,11 +1177,87 @@ document.addEventListener("mousemove",e=>{ const t=e.target.closest&&e.target.cl
   tip.textContent=t.getAttribute("data-tip"); tip.style.display="block";
   tip.style.left=Math.min(e.clientX+14,innerWidth-tip.offsetWidth-8)+"px"; tip.style.top=Math.min(e.clientY+14,innerHeight-tip.offsetHeight-8)+"px"; });
 
+/* ================= Lista de IDs ================= */
+$("bIds").onclick=e=>{ e.stopPropagation(); const el=$("ms-ids"), op=!el.classList.contains("open"); closeAllMs(); if(op){ el.classList.add("open"); $("idsTxt").focus(); } };
+$("ms-ids").querySelector(".pop").onclick=e=>e.stopPropagation();
+$("idsApply").onclick=()=>{
+  const t=$("idsTxt").value.trim(); if(!t){ IDSET=null; refresh(true); return; }
+  let toks=t.split(/[\n,;\t|]+/).map(x=>x.trim()).filter(Boolean); if(toks.length===1) toks=toks[0].split(/\s+/);
+  IDSET=new Set(toks.map(x=>x.toUpperCase()));
+  const all=new Set(SITES.map(x=>x.id.toUpperCase())), miss=[...IDSET].filter(x=>!all.has(x));
+  closeAllMs(); refresh(true);
+  toast(miss.length?`${IDSET.size-miss.length} de ${IDSET.size} IDs encontrados. No están: ${miss.slice(0,6).join(", ")}${miss.length>6?"…":""}`:`${IDSET.size} sites en la lista`);
+};
+$("idsClear").onclick=()=>{ $("idsTxt").value=""; IDSET=null; closeAllMs(); refresh(true); };
+
+/* ================= Búsqueda por radio ================= */
+$("bRadio").onclick=()=>$("rpanel").classList.toggle("on");
+function parseCoord(t){ const n=(String(t).match(/-?\d+(?:[.,]\d+)?/g)||[]).map(x=>parseFloat(x.replace(",","."))); if(n.length<2) return null;
+  let [a,b]=n; if(Math.abs(a)>Math.abs(b)) [a,b]=[b,a]; return {lat:a,lon:b}; }
+function setNear(lat,lon,r,lbl){ NEAR={lat,lon,r,lbl:lbl||`${lat.toFixed(5)}, ${lon.toFixed(5)}`}; $("rCoord").value=`${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+  if(CUR_VIEW!=="vMapa") setView("vMapa"); $("sortBy").value="dist"; refresh(false);
+  map.fitBounds(L.latLng(lat,lon).toBounds(r*2000),{padding:[30,30]}); }
+$("rApply").onclick=()=>{ const c=parseCoord($("rCoord").value); if(!c){ toast("Escribe las coordenadas como: -12.0464, -77.0428"); return; } setNear(c.lat,c.lon,+$("rKm").value); };
+$("rClear").onclick=()=>{ NEAR=null; if($("sortBy").value==="dist") $("sortBy").value=lsGet("hdv_sort","id")==="dist"?"id":lsGet("hdv_sort","id"); $("rpanel").classList.remove("on"); refresh(true); };
+$("rKm").onchange=()=>{ if(NEAR) setNear(NEAR.lat,NEAR.lon,+$("rKm").value,NEAR.lbl); };
+map.on("contextmenu",e=>{ if(!SITES.length) return; $("rpanel").classList.add("on"); setNear(e.latlng.lat,e.latlng.lng,+$("rKm").value); });
+function drawNear(){ nearLayer.clearLayers(); if(!NEAR) return;
+  L.circle([NEAR.lat,NEAR.lon],{radius:NEAR.r*1000,color:"#f2b705",weight:2,dashArray:"6 6",fillColor:"#f2b705",fillOpacity:.06,interactive:false}).addTo(nearLayer);
+  L.circleMarker([NEAR.lat,NEAR.lon],{radius:5,color:"#0f2a3a",weight:2,fillColor:"#f2b705",fillOpacity:1,interactive:false}).addTo(nearLayer); }
+
+/* ================= Ruta entre varios sites ================= */
+function toggleRoute(s){ const i=ROUTE.indexOf(s); if(i>=0) ROUTE.splice(i,1); else { if(ROUTE.length>=10){ toast("La ruta admite hasta 10 sites"); return; } ROUTE.push(s); }
+  drawRoute(); toast(i>=0?`${s.id} quitado de la ruta`:`${s.id} agregado a la ruta (${ROUTE.length})`); }
+function routeUrl(){ const pts=ROUTE.map(x=>`${x.latN},${x.lonN}`), dest=pts[pts.length-1], way=pts.slice(0,-1);
+  return `https://www.google.com/maps/dir/?api=1&destination=${dest}${way.length?"&waypoints="+encodeURIComponent(way.join("|")):""}&travelmode=driving`; }
+function drawRoute(){
+  routeLayer.clearLayers(); const tr=$("rtray");
+  if(!ROUTE.length){ tr.classList.remove("on"); tr.innerHTML=""; return; }
+  if(ROUTE.length>1) L.polyline(ROUTE.map(x=>[x.latN,x.lonN]),{color:"#f2b705",weight:3,dashArray:"8 6",interactive:false}).addTo(routeLayer);
+  ROUTE.forEach((x,i)=>L.marker([x.latN,x.lonN],{interactive:false,icon:L.divIcon({className:"",iconSize:[0,0],html:`<div class="rnum">${i+1}</div>`})}).addTo(routeLayer));
+  tr.innerHTML=`<div class="rt-head"><b>Ruta (${ROUTE.length})</b><span class="hint" style="margin:0">Parte de la ubicación de quien abre el enlace</span></div>
+    <ol>${ROUTE.map((x,i)=>`<li><span class="rnum s">${i+1}</span><span class="rt-n" title="${esc(x.name)}"><b>${esc(x.id)}</b> ${esc(x.name)}</span><button data-u="${i}" title="Subir" ${i===0?"disabled":""}>▲</button><button data-d="${i}" title="Bajar" ${i===ROUTE.length-1?"disabled":""}>▼</button><button data-x="${i}" title="Quitar">×</button></li>`).join("")}</ol>
+    <div class="rt-act"><a class="abtn pri" href="${routeUrl()}" target="_blank" rel="noopener">${ICON.nav}Abrir en Google Maps</a><button class="abtn" id="rtCopy">${ICON.chat}Copiar para WhatsApp</button><button class="linkbtn" id="rtClear">Limpiar</button></div>`;
+  tr.classList.add("on");
+  tr.querySelectorAll("[data-u]").forEach(b=>b.onclick=()=>{ const i=+b.dataset.u; [ROUTE[i-1],ROUTE[i]]=[ROUTE[i],ROUTE[i-1]]; drawRoute(); });
+  tr.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{ const i=+b.dataset.d; [ROUTE[i+1],ROUTE[i]]=[ROUTE[i],ROUTE[i+1]]; drawRoute(); });
+  tr.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>{ ROUTE.splice(+b.dataset.x,1); drawRoute(); remountFicha(); });
+  $("rtClear").onclick=()=>{ ROUTE=[]; drawRoute(); remountFicha(); };
+  $("rtCopy").onclick=()=>{ const t=["🚐 *RUTA DE ATENCIÓN*",""].concat(ROUTE.map((x,i)=>`*${i+1}. ${x.id} – ${x.name}*\n   ${[x.dir,x.distrito].filter(Boolean).join(", ")}${x.autMin!==null?`\n   Autonomía: ${fmtMin(x.autMin)}`:""}`),["",`🗺️ Ruta: ${routeUrl()}`]).join("\n"); copyText(t,"Ruta copiada para WhatsApp"); };
+}
+
+/* ================= Imprimir ficha ================= */
+let printMap=null;
+function printFicha(s){
+  const pa=$("printArea"), pc=Math.round(s.comp*100);
+  pa.innerHTML=`<div class="p-top"><div><h1>${esc(s.id)} – ${esc(s.name)}</h1><div>${esc([s.fm,s.prio,s.tipoSite].filter(Boolean).join(" | "))}</div></div><div class="p-date">${DATA_FECHA?"Datos de Autin al "+esc(DATA_FECHA):""}</div></div>
+    ${s.hasCoord?'<div id="pmap"></div>':""}<div class="p-body">${fichaHtml(s,[])}</div>`;
+  pa.querySelectorAll(".actions,.hint,.near").forEach(x=>x.remove()); pa.querySelectorAll("details").forEach(d=>d.open=true);
+  const r=pa.querySelector(".ring"); if(r) r.style.setProperty("--p",pc);
+  document.body.classList.add("pf");
+  let done=false; const go=()=>{ if(done) return; done=true; setTimeout(()=>window.print(),150); };
+  if(s.hasCoord){
+    if(printMap){ printMap.remove(); printMap=null; }
+    document.body.offsetWidth;
+    printMap=L.map("pmap",{zoomControl:false,attributionControl:true,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,boxZoom:false,keyboard:false,touchZoom:false}).setView([s.latN,s.lonN],16);
+    const t=esri("World_Street_Map").addTo(printMap); t.on("load",go);
+    L.circleMarker([s.latN,s.lonN],{radius:9,color:"#ffffff",weight:3,fillColor:"#d03b3b",fillOpacity:1}).addTo(printMap);
+    setTimeout(go,3000);
+  } else go();
+}
+window.addEventListener("afterprint",()=>{ if(!document.body.classList.contains("pf")) return; document.body.classList.remove("pf"); if(printMap){ printMap.remove(); printMap=null; } $("printArea").innerHTML=""; });
+
 /* ================= Refresco general ================= */
 function renderQuick(){
   $("qchips").innerHTML=QUICK.map(q=>{ const n=SITES.filter(s=>passes(s,q.k)&&q.fn(s)).length;
     return `<button class="qchip${QON.has(q.k)?" on":""}" data-q="${q.k}" aria-pressed="${QON.has(q.k)}"><i style="background:${cssv(q.c)}"></i>${esc(q.lbl)} <span class="n">${n.toLocaleString()}</span></button>`; }).join("");
-  $("qchips").querySelectorAll(".qchip").forEach(b=>b.onclick=()=>toggleQuick(b.dataset.q));
+  const ex=[]; if(IDSET) ex.push(`<button class="qchip on" data-x="ids">Lista de ${IDSET.size} IDs <span class="n">×</span></button>`);
+  if(VALF) ex.push(`<button class="qchip on" data-x="val">${esc(VALS.find(v=>v.k===VALF).lbl)} <span class="n">×</span></button>`);
+  if(NEAR) ex.push(`<button class="qchip on" data-x="near">A ${NEAR.r} km de ${esc(NEAR.lbl)} <span class="n">×</span></button>`);
+  if(ex.length) $("qchips").insertAdjacentHTML("afterbegin",ex.join(""));
+  $("qchips").querySelectorAll(".qchip[data-q]").forEach(b=>b.onclick=()=>toggleQuick(b.dataset.q));
+  $("qchips").querySelectorAll(".qchip[data-x]").forEach(b=>b.onclick=()=>{ if(b.dataset.x==="ids"){ IDSET=null; $("idsTxt").value=""; refresh(true); } else if(b.dataset.x==="val"){ VALF=null; refresh(true); } else $("rClear").click(); });
+  $("bIds").classList.toggle("act",!!IDSET); $("bIds").textContent=IDSET?`Lista de IDs (${IDSET.size})`:"Lista de IDs";
 }
 function toggleQuick(k){ QON.has(k)?QON.delete(k):QON.add(k); refresh(true); }
 function refresh(fit){
@@ -963,16 +1269,32 @@ function refresh(fit){
   if(CUR_VIEW==="vTablero") renderTablero(); if(CUR_VIEW==="vCalidad") renderCalidad();
   document.querySelectorAll(".ms.open").forEach(el=>{ const f=FILTERS.find(x=>"ms-"+x.id===el.id); f&&renderOpts(f); });
 }
-function setView(v){ CUR_VIEW=v; document.querySelectorAll(".views button").forEach(b=>b.classList.toggle("on",b.dataset.v===v)); document.querySelectorAll(".view").forEach(x=>x.classList.toggle("on",x.id===v));
+function setView(v){ if(v==="vMapa") closeDrawer(); CUR_VIEW=v; document.querySelectorAll(".views button").forEach(b=>b.classList.toggle("on",b.dataset.v===v)); document.querySelectorAll(".view").forEach(x=>x.classList.toggle("on",x.id===v));
   if(v==="vMapa") setTimeout(()=>{ map.invalidateSize(); if(needFit){ fitView(); needFit=false; } },0); if(v==="vTablero") renderTablero(); if(v==="vCalidad") renderCalidad(); }
 document.querySelectorAll(".views button").forEach(b=>b.onclick=()=>setView(b.dataset.v));
 $("colorBy").onchange=()=>{ renderMap(false); renderList(); };
 $("q").addEventListener("input",()=>{ clearTimeout(window._qt); window._qt=setTimeout(()=>refresh(false),250); });
 $("q").addEventListener("keydown",e=>{ if(e.key==="Enter"){ clearTimeout(window._qt); refresh(false); } if(e.key==="Enter"&&VIEW.length){ const s=[...VIEW].sort(SORTS.id)[0]; setView("vMapa"); select(s,true,true); } });
 $("cHw").onchange=()=>refresh(true);
-$("bReset").onclick=()=>{ $("q").value=""; FILTERS.forEach(f=>SELF[f.id].clear()); QON.clear(); refresh(true); };
+$("bReset").onclick=()=>{ $("q").value=""; FILTERS.forEach(f=>SELF[f.id].clear()); QON.clear(); IDSET=null; $("idsTxt").value=""; NEAR=null; VALF=null; refresh(true); };
 
 $("bPlantG").onclick=()=>copyPlantilla(null);
+/* Atajos: "/" buscar, R recientes, flechas para recorrer la lista, Enter abre la burbuja, Esc cierra */
+document.addEventListener("keydown",e=>{
+  const tag=(e.target.tagName||"").toLowerCase(), typing=tag==="input"||tag==="textarea"||tag==="select"||e.target.isContentEditable;
+  if(e.key==="Escape"){ map.closePopup(); closeAllMs(); if(typing) e.target.blur(); return; }
+  if(typing||e.ctrlKey||e.metaKey||e.altKey||!SITES.length) return;
+  if(e.key==="/"){ e.preventDefault(); $("q").focus(); $("q").select(); return; }
+  if(e.key==="r"||e.key==="R"){ e.preventDefault(); $("bRec").click(); return; }
+  if(e.key==="ArrowDown"||e.key==="ArrowUp"){
+    const rows=CUR_VIEW==="vTablero"?(window._tabRows||[]):[...VIEW].sort(SORTS[$("sortBy").value]||SORTS.id).slice(0,300); if(!rows.length) return;
+    e.preventDefault(); let i=rows.indexOf(SEL); i=i<0?0:Math.max(0,Math.min(rows.length-1,i+(e.key==="ArrowDown"?1:-1)));
+    const x=rows[i]; select(x,CUR_VIEW==="vMapa",false);
+    const el=document.querySelector(`#list .it[data-id="${CSS.escape(x.id)}"], .tlist tr[data-id="${CSS.escape(x.id)}"]`); if(el) el.scrollIntoView({block:"nearest"});
+    return; }
+  if(e.key==="Enter"&&SEL&&CUR_VIEW==="vMapa"){ openSitePopup(SEL); }
+});
+document.querySelectorAll(".seg2 button").forEach(b=>b.classList.toggle("on",b.dataset.m===MODE));
 
 /* ================= Tema ================= */
 const TEMAS=["auto","light","dark"], TLBL={auto:"Tema automático",light:"Tema claro",dark:"Tema oscuro"};
@@ -980,7 +1302,7 @@ let tema=lsGet("hdv_tema","auto"); if(!TEMAS.includes(tema)) tema="auto";
 function applyTema(){
   if(tema==="auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme",tema);
   $("temaLbl").textContent=TLBL[tema]; syncGris();
-  if(SITES.length){ renderMap(false); renderList(); renderQuick(); if(CUR_VIEW!=="vMapa") setView(CUR_VIEW); if(SEL) showFicha(SEL); }
+  if(SITES.length){ renderMap(false); renderList(); renderQuick(); if(CUR_VIEW!=="vMapa") setView(CUR_VIEW); remountFicha(); }
 }
 $("bTema").onclick=()=>{ tema=TEMAS[(TEMAS.indexOf(tema)+1)%3]; lsSet("hdv_tema",tema); applyTema(); };
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{ if(tema==="auto") applyTema(); });

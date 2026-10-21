@@ -193,6 +193,15 @@ input[type=file]{display:none}
 .abtn.pri{background:var(--head);border-color:var(--head);color:#fff}
 .abtn svg{width:15px;height:15px}
 .hint{font-size:12px;color:var(--muted);margin-top:6px}
+.notas{display:flex;flex-direction:column;gap:6px;margin-top:4px;max-height:320px;overflow:auto}
+.nota{background:var(--surface-2);border:1px solid var(--line);border-left:3px solid var(--line);border-radius:var(--r-s);padding:7px 9px;font-size:12.5px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+.nota.dated{border-left-color:var(--accent)}
+.nota.first{border-left-color:var(--good)}
+.nota .nd{display:inline-block;font-weight:600;font-size:11.5px;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);border-radius:4px;padding:0 6px;margin-right:6px}
+.nota.first .nd{color:var(--good);background:color-mix(in srgb,var(--good) 14%,transparent)}
+.nota mark,.raw mark{background:color-mix(in srgb,var(--warning) 40%,transparent);color:inherit;border-radius:2px;padding:0 1px}
+.pend{margin-top:8px;font-size:12px;border:1px dashed var(--warning);border-radius:var(--r-s);padding:6px 9px}
+.pend b{color:var(--warning)}
 .sum{display:grid;grid-template-columns:1fr 1fr;margin:12px 16px 0;border:1px solid var(--line);border-radius:var(--r-m);overflow:hidden}
 .sum > div{padding:6px 10px;border-top:1px solid var(--soft);min-width:0}
 .sum > div:nth-child(-n+2){border-top:0}
@@ -277,7 +286,7 @@ body.pf #printArea{display:block;position:fixed;left:-20000px;top:0}
 #pmap{height:240px;border:1px solid #d8dee4;border-radius:8px;margin-bottom:10px}
 #printArea .fhead{background:none;padding:0 0 8px}
 #printArea .sec,#printArea .sum,#printArea .missing{margin-left:0;margin-right:0;break-inside:avoid}
-#printArea .raw{max-height:none}
+#printArea .raw,#printArea .notas{max-height:none}
 @page{margin:12mm}
 #drawer{position:fixed;top:56px;right:0;bottom:0;width:440px;max-width:100%;background:var(--surface);border-left:1px solid var(--line);box-shadow:var(--shadow);z-index:1500;transform:translateX(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column}
 #drawer.on{transform:none}
@@ -325,6 +334,9 @@ body.pf #printArea{display:block;position:fixed;left:-20000px;top:0}
 .cp:hover{color:var(--accent)}
 #ms-rec .pop{width:320px;left:auto;right:0}
 #ms-rec .opts{max-height:360px}
+.cbar{position:relative;height:10px;background:var(--soft);border-radius:5px;overflow:hidden}
+.cbar i{position:absolute;top:0;bottom:0;display:block}
+.cbar i.a{left:0;background:color-mix(in srgb,var(--bar) 55%,var(--soft))}
 .lgb{display:inline-flex;align-items:center;gap:5px;border:1px solid transparent;background:none;border-radius:999px;padding:2px 8px;cursor:pointer;font-size:12px;color:var(--muted)}
 .lgb:hover{border-color:var(--line)}
 .lgb.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
@@ -397,6 +409,7 @@ body.pf #printArea{display:block;position:fixed;left:-20000px;top:0}
       <textarea id="idsTxt" rows="7" placeholder="LI0043&#10;LI0560&#10;LU3598"></textarea>
       <div class="acts" style="padding:8px 10px"><button class="linkbtn" id="idsClear">Quitar lista</button><button class="abtn pri" id="idsApply" style="height:30px">Ver estos sites</button></div></div></div>
     <div id="msHost" class="frow"></div>
+    <label class="tgl" title="Incluye Comentarios finales y Detalle de acceso en la búsqueda"><input type="checkbox" id="cCom"> Buscar también en comentarios</label>
     <label class="tgl"><input type="checkbox" id="cHw" checked> Solo mantenimiento Huawei</label>
     <div class="ms" id="ms-rec"><button type="button" id="bRec" title="Sites abiertos recientemente (tecla R)">Recientes</button><div class="pop" role="dialog" aria-label="Sites recientes"><div class="opts" id="recList"></div></div></div>
     <button class="linkbtn" id="bReset" style="margin-left:6px">Limpiar filtros</button>
@@ -490,6 +503,7 @@ body.pf #printArea{display:block;position:fixed;left:-20000px;top:0}
 <div id="loading"><div class="lcard"><div class="lbar"><i></i></div><span id="loadTxt">Cargando…</span></div></div>
 <aside id="drawer" aria-label="Ficha del site"><div class="dhead"><span>Ficha del site</span><button id="dClose" aria-label="Cerrar">×</button></div><div id="drawerBody"></div></aside>
 <div id="printArea"></div>
+<input type="file" id="fBase" accept=".xlsx,.xls,.csv">
 <div id="tip"></div>
 <div class="toast" id="toast" role="status"></div>
 
@@ -595,6 +609,52 @@ function parseHorario(raw){
 }
 function parseSiNo(raw){ const p=parsePipe(raw), h=(p[0]||"").toUpperCase(); return {req:/^(SI|SÍ|YES)\b/.test(h)?"SI":/^NO\b/.test(h)?"NO":"", p}; }
 const RE_SNIP={escalera:/ESCALERA/i, horario:/HORARIO|\bL-V\b|LUNES A|DIURNO|NOCTURNO|HASTA LAS/i, contingente:/CONTINGENTE|RESGUARDO|PELIGROS|DELINCU|POLIC/i, acarreo:/ACARREO|TENDER CABLE|CABLE DE \d+/i};
+/* ---- Comentarios finales: separar por fechas y detectar datos sin pasar a su columna ---- */
+const MESES={ENE:1,JAN:1,FEB:2,MAR:3,ABR:4,APR:4,MAY:5,JUN:6,JUL:7,AGO:8,AUG:8,SET:9,SEP:9,OCT:10,NOV:11,DIC:12,DEC:12};
+const RE_FECHA_N=/\b(\d{1,2})\s*[\/.-]\s*(\d{1,2}|[A-Za-z]{3})[a-zA-Z]*\s*[\/.-]\s*(\d{4}|\d{2})\b/;
+function fechaNota(tok){
+  const m=RE_FECHA_N.exec(tok); if(!m) return null;
+  const d=+m[1], mo=/^\d+$/.test(m[2])?+m[2]:MESES[m[2].toUpperCase()], y=m[3].length===2?2000+(+m[3]):+m[3];
+  if(!mo||mo>12||d<1||d>31||y<1990||y>2100) return null; return new Date(y,mo-1,d).getTime();
+}
+function notasParse(raw){
+  const txt=String(raw||"").replace(/\r/g,"").trim(); if(!txt) return [];
+  const chunks=txt.split(/\n|\*\*|\s\*\s|(?=\s\d{1,2}\/\d{1,2}\/\d{2,4}\s+[A-ZÁÉÍÓÚa-z]{3,}.{8,})/).map(c=>c.replace(/^[\s*\-–•]+/,"").trim()).filter(Boolean);
+  const out=[]; let cur=null;
+  chunks.forEach(c=>{
+    const m=RE_FECHA_N.exec(c), t=m?fechaNota(m[0]):null;
+    if(t!==null){ cur={fecha:m[0].replace(/\s+/g,""),t,txt:(c.slice(0,m.index)+" "+c.slice(m.index+m[0].length)).replace(/^[\s:\-–]+/,"").replace(/\s+/g," ").trim()}; out.push(cur); }
+    else if(cur) cur.txt+=(cur.txt?"\n":"")+c;
+    else { out.push({fecha:"",t:null,txt:c}); }
+  });
+  /* Lo que no tiene fecha (datos generales) va primero; luego lo fechado, del más reciente al más antiguo */
+  const sin=out.filter(o=>o.t===null), con=out.filter(o=>o.t!==null).sort((a,b)=>b.t-a.t);
+  const fusion=sin.length?[{fecha:"",t:null,txt:sin.map(o=>o.txt).join("\n")}]:[];
+  return fusion.concat(con);
+}
+function marcaQ(html){
+  const q=$("cCom")&&$("cCom").checked?$("q").value.trim():""; if(q.length<2) return html;
+  const re=new RegExp("("+esc(q).replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")","gi");
+  return html.split(/(<[^>]+>)/).map(p=>p.startsWith("<")?p:p.replace(re,"<mark>$1</mark>")).join("");
+}
+function notasHtml(s){
+  const ns=notasParse(s.comFin); if(!ns.length) return "";
+  let primero=true;
+  return `<div class="notas">${ns.map(n=>{ const cls=n.t!==null?("nota dated"+(primero?" first":"")):"nota"; const tag=n.t!==null?`<span class="nd">${esc(n.fecha)}${primero?" · más reciente":""}</span>`:""; if(n.t!==null) primero=false; return `<div class="${cls}">${tag}${marcaQ(esc(n.txt))}</div>`; }).join("")}</div>`;
+}
+const RE_TEL=/(?<![\d.])9\d{2}[\s-]?\d{3}[\s-]?\d{3}(?!\d)/, RE_MAIL=/[\w.+-]+@[\w-]+\.[\w.-]+/;
+function comDatos(s){
+  const t=String(s.comFin||""), U=t.toUpperCase(), r=[]; if(!t) return r;
+  let m;
+  if(!s.cTel && (m=RE_TEL.exec(t))) r.push({dato:"Teléfono",v:m[0].replace(/[\s-]/g,""),col:"Móvil responsable"});
+  if(!s.cMail && (m=RE_MAIL.exec(t))) r.push({dato:"Correo",v:m[0],col:"Dirección reponsable"});
+  if(!s.ll.sedes.length && (m=/LLAVES?\s+(?:EN|DE)\s+([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ .]{2,25})/.exec(U))) r.push({dato:"Llave",v:m[1].trim(),col:"Ubicación de llaves"});
+  else if(s.ll.sedes.length && !s.ll.no && s.ll.items.every(i=>!i.n) && (m=/LLAVERO\s*(?:N[°ºO.]*\s*)?#?\s*(\d+)/.exec(U))) r.push({dato:"Llavero",v:"#"+m[1],col:"Ubicación de llaves"});
+  if(!s.hor.txt && (m=/\bL\s*-\s*[VSD]\b[^\n]{0,25}|LUNES A [A-ZÁÉ]+[^\n]{0,25}|24\s*X\s*7|24\s*HORAS|\d{1,2}(:\d{2})?\s*(AM|PM|HRS?)\s*(A|-|HASTA)\s*\d{1,2}(:\d{2})?\s*(AM|PM|HRS?)?/.exec(U))) r.push({dato:"Horario",v:m[0].trim(),col:"Life cycle"});
+  if(s.autMin===null && (m=/AUTONOM[IÍ]A[^\n(]{0,40}\(\s*(\d{1,4})\s*\)/.exec(U))) r.push({dato:"Autonomía",v:m[1]+" min",col:"Autonomía de baterías"});
+  if(!s.sumNum && (m=/SUMINISTRO\s*(?:N[°ºO.]*)?\s*:?\s*(\d{5,})/.exec(U))) r.push({dato:"Suministro",v:m[1],col:"Numero de suministro"});
+  return r;
+}
 function snippet(t,re){ const m=re.exec(t); if(!m) return ""; return t.slice(Math.max(0,m.index-60),m.index+m[0].length+110).replace(/\s+/g," ").trim(); }
 
 /* Completitud: datos que debe tener la ficha de cada site y la columna de Autin donde se llenan */
@@ -639,6 +699,7 @@ function buildSite(r){
   s.isCand=s.acc.mech.some(m=>ELECTR.includes(m));
   s.mecPrin=s.isCand?"Candado electrónico / iLOQ / multilock":s.acc.mech.includes("LLAVE")?"Llave":s.acc.mech.includes("ACCESO DIRECTO")?"Acceso directo":"Sin dato";
   const t=[s.acceso,s.det,s.comFin].join(" | "); s.pistas={}; for(const k in RE_SNIP){ const v=snippet(t,RE_SNIP[k]); if(v) s.pistas[k]=v; }
+  s.comDat=comDatos(s);
   const ap=CRIT.filter(c=>!c.applies||c.applies(s));
   s.missing=ap.filter(c=>!c.ok(s)); s.comp=1-s.missing.length/ap.length;
   s.vipImp=/^YES$/i.test(s.vip)||/IMPORTANT/i.test(s.importante);
@@ -673,7 +734,7 @@ const QUICK=[
   {k:"inc", lbl:"Ficha incompleta (< 70%)", c:"--none", fn:s=>s.comp<0.7}
 ];
 const QON=new Set();
-let VALF=null;
+let VALF=null, SITES_BY_ID=new Map();
 const VALS=[
   {k:"accnstd", lbl:"Tipo de acceso con palabras fuera de la lista", col:"Tipo de acceso", fn:s=>!!s.acceso&&!s.acc.std, val:s=>s.acceso},
   {k:"autsinf", lbl:"Autonomía sin fecha de medición", col:"Acceptance date", fn:s=>s.autMin!==null&&!s.autF, val:s=>s.autMin+" min"},
@@ -685,7 +746,8 @@ const VALS=[
   {k:"acaleg", lbl:"GEP Acarreo con valor que no es acarreo", col:"GEP Acarreo", fn:s=>!!s.aca.legacy, val:s=>s.aca.legacy},
   {k:"horsin", lbl:"Horario sin horas", col:"Life cycle", fn:s=>!!s.hor.txt&&!/\d/.test(s.hor.txt), val:s=>s.horario},
   {k:"cont", lbl:"Dangerous Site en No, pero el texto dice contingente", col:"Dangerous Site", fn:s=>!s.danger&&!!s.pistas.contingente, val:s=>s.pistas.contingente},
-  {k:"lleg90", lbl:"Tiempo de llegada en 90 (posible valor por defecto)", col:"Tiempo de llegada", fn:s=>s.lleg===90, val:s=>"90"}
+  {k:"lleg90", lbl:"Tiempo de llegada en 90 (posible valor por defecto)", col:"Tiempo de llegada", fn:s=>s.lleg===90, val:s=>"90"},
+  {k:"comdat", lbl:"Comentarios finales con datos sin pasar a su columna", col:"Comentarios finales", fn:s=>s.comDat.length>0, val:s=>s.comDat.map(d=>`${d.dato} ${d.v} → ${d.col}`).join("; ")}
 ];
 let IDSET=null, NEAR=null, ROUTE=[], MODE=lsGet("hdv_modo","puntos");
 function autBucket(s){ return s.autMin===null?"Sin dato":s.autMin<60?"Menos de 1 h":s.autMin<240?"De 1 a 4 h":"4 h o más"; }
@@ -693,7 +755,7 @@ function baseSet(){ return SITES.filter(s=>!$("cHw").checked||s.isHw); }
 function passes(s,skip){
   if($("cHw").checked && !s.isHw) return false;
   const q=$("q").value.trim().toUpperCase();
-  if(q && !(s.id+" "+s.name+" "+s.funcLoc+" "+s.dir+" "+s.distrito).toUpperCase().includes(q)) return false;
+  if(q && !(s.id+" "+s.name+" "+s.funcLoc+" "+s.dir+" "+s.distrito+($("cCom").checked?" "+s.comFin+" "+s.det:"")).toUpperCase().includes(q)) return false;
   if(IDSET && !IDSET.has(s.id.toUpperCase())) return false;
   if(VALF && !VALS.find(v=>v.k===VALF).fn(s)) return false;
   if(NEAR){ if(!s.hasCoord) return false; s._d=hav(NEAR.lat,NEAR.lon,s.latN,s.lonN); if(s._d>NEAR.r) return false; }
@@ -919,7 +981,9 @@ function fichaHtml(s,near){
     ${kv("Horario","Life cycle",s.hor.txt)}${kv("Anticipación","Life cycle",s.hor.antic?s.hor.antic+" h":"")}
     ${kv("Contacto","Nombre / Móvil responsable",[s.cNom,s.cTel].filter(Boolean).join(", "),false,s.cTel||true)}${kv("Correo","Dirección reponsable",s.cMail,false,true)}
     ${kv("Acceso complicado","Access Issue",s.accIssue?"Sí":"")}</div>
-    ${s.det?`<div class="hint" style="margin-top:8px">Detalle acceso</div><div class="raw" style="margin-top:2px">${esc(s.det)}</div>`:""}</div>`;
+    ${s.det?`<div class="hint" style="margin-top:8px">Detalle acceso</div><div class="raw" style="margin-top:2px">${marcaQ(esc(s.det))}</div>`:""}</div>`;
+  if(s.comFin) h+=`<div class="sec" id="secNotas"><h3>${ICON.text}Notas del site <span class="hint" style="margin:0 0 0 6px;font-weight:400">Comentarios finales</span></h3>${notasHtml(s)}
+    ${s.comDat.length?`<div class="pend"><b>Por pasar a su columna:</b> ${s.comDat.map(d=>`${esc(d.dato)} <b style="color:inherit">${esc(d.v)}</b> → ${esc(d.col)}`).join(" · ")}</div>`:""}</div>`;
   h+=`<div class="sec"><h3>${ICON.shield}Seguridad</h3><div class="kv">${kv("Zona contingente","Dangerous Site",s.danger?"Sí":(s.dangerSet?"No (sin validar si es el valor por defecto)":""))}</div></div>`;
   h+=`<div class="sec"><h3>${ICON.ladder}Trabajo en campo</h3><div class="kv">
     ${kv("Escalera","PLN ID",txtEsc(s),s.escRaw&&!s.esc.req)}${kv("Acarreo manual","GEP Acarreo",txtAca(s))}
@@ -932,8 +996,7 @@ function fichaHtml(s,near){
     ${kv("GE en el site","Has generator",/^YES$/i.test(s.hasGe)?["Sí",s.geTipo,s.geNum?s.geNum+" und.":""].filter(Boolean).join(", "):(s.hasGe?"No":""))}
     ${kv("Tipo de energía","",s.energia)}${kv("Suministro","",[s.sumEmp,s.sumNum].filter(Boolean).join(", "))}</div>
     ${s.autHist?`<details class="more"><summary>Historial de autonomía</summary><div class="raw">${esc(s.autHist)}</div></details>`:""}</div>`;
-  h+=`<div class="sec"><h3>${ICON.user}Escalamiento y notas</h3><div class="kv">${kv("Jefe Huawei","",s.jefeHw)}${kv("Jefe cooperador","",s.jefeCoop)}${kv("Seguridad cooperador","",s.segCoop)}</div>
-    ${s.comFin?`<details class="more"><summary>Comentarios finales</summary><div class="raw">${esc(s.comFin)}</div></details>`:""}</div>`;
+  h+=`<div class="sec"><h3>${ICON.user}Escalamiento</h3><div class="kv">${kv("Jefe Huawei","",s.jefeHw)}${kv("Jefe cooperador","",s.jefeCoop)}${kv("Seguridad cooperador","",s.segCoop)}</div></div>`;
   const pk=Object.keys(s.pistas).filter(k=>(k==="escalera"&&!s.esc.req)||(k==="horario"&&!s.hor.txt)||(k==="acarreo"&&!s.aca.req)||(k==="contingente"&&!s.danger));
   if(pk.length) h+=`<div class="sec"><h3>${ICON.text}Pistas en el texto actual</h3><div class="kv">${pk.map(k=>kv(k[0].toUpperCase()+k.slice(1),"","…"+s.pistas[k]+"…")).join("")}</div><div class="hint">Estas frases están en los comentarios de Autin; conviene pasarlas a su columna.</div></div>`;
   if(near.length) h+=`<div class="sec"><h3>${ICON.near}Sites más cercanos</h3><div class="near">${near.map((o,i)=>`<button data-n="${i}"><span><b>${esc(o.x.id)}</b> ${esc(o.x.name)}</span><span style="color:var(--muted);white-space:nowrap">${o.d.toFixed(1)} km</span></button>`).join("")}</div></div>`;
@@ -967,6 +1030,13 @@ function fichaWsp(s){
   sec("📍 *UBICACIÓN*",[["Dirección",s.dir],["Distrito",[s.distrito,s.prov,s.dep].filter(Boolean).join(", ")],["Coordenadas",s.hasCoord?`${s.latN.toFixed(6)}, ${s.lonN.toFixed(6)}`:""],["Cómo llegar",s.hasCoord?gmapsUrl(s):""],["Tiempo de llegada",s.lleg?s.lleg+" min":""]]);
   sec("🔑 *ACCESO*",[["Torrera",s.torrera],["Llave",txtLlave(s)],["Ingreso",s.acc.mech.join(", ")],["Trámite",s.acc.gest.join(", ")+(s.hor.antic?` (pedir ${s.hor.antic} h antes)`:"")],["Horario",s.hor.txt],["Contacto",[s.cNom,s.cTel].filter(Boolean).join(" – ")],["Correo",s.cMail]]);
   if(s.det){ const d=s.det.replace(/CORREOS? DE ACCESO:?/gi,"").replace(/[\w.+-]+@[\w-]+\.[\w.-]+[;,]?/g,"").replace(/\s+/g," ").trim(); if(d) out.push("",`📝 _Indicaciones:_ ${d.slice(0,450)}${d.length>450?"…":""}`); }
+  if(s.comFin){
+    const limpia=x=>x.replace(/CORREOS?( DE ACCESO)?\s*:?/gi,"").replace(/[\w.+-]+@[\w-]+\.[\w.-]+[;,]?/g,"").replace(/\s+/g," ").replace(/^[\s:\-–/]+|[\s\-–/]+$/g,"").trim();
+    const ns=notasParse(s.comFin).map(n=>({f:n.fecha,x:limpia(n.txt)})).filter(n=>n.x.length>2);
+    const vistos=new Set(), ls=[]; let tot=0;
+    for(const n of ns){ const k=n.x.toUpperCase(); if(vistos.has(k)) continue; vistos.add(k); const l=`▫️ ${n.f?`*${n.f}* `:""}${n.x.slice(0,220)}${n.x.length>220?"…":""}`; if(tot+l.length>600){ ls.push("▫️ …"); break; } ls.push(l); tot+=l.length; }
+    if(ls.length) out.push("","📝 *NOTAS DEL SITE*",...ls);
+  }
   sec("🪜 *TRABAJO EN CAMPO*",[["Escalera",txtEsc(s)],["Acarreo",txtAca(s)],["Torre",[s.tipoTorre,s.altTorre?s.altTorre+" m":""].filter(Boolean).join(", ")],["Altura edificación",s.altEdif?s.altEdif+" m":""]]);
   sec("⚡ *ENERGÍA*",[["Autonomía",s.autMin!==null?fmtMin(s.autMin)+(s.autF?` (medida el ${fmtFecha(s.autF)})`:" (sin fecha de medición)"):""],["GE en el site",/^YES$/i.test(s.hasGe)?["Sí",s.geTipo].filter(Boolean).join(", "):""],["GE a llevar",s.geCap],["Dónde va el GE",[s.geU.txt,s.geU.cable?s.geU.cable+" m de cable":""].filter(Boolean).join(", ")],["Suministro",[s.sumEmp,s.sumNum].filter(Boolean).join(" – ")]]);
   sec("👷 *ESCALAMIENTO*",[["Jefe Huawei",s.jefeHw],["Jefe cooperador",s.jefeCoop]]);
@@ -1106,7 +1176,7 @@ function renderCalidad(){
     const ok=arr.filter(c.ok).length, p=ok/arr.length, [bg,fg]=seqColor(p); return `<td class="c" style="background:${bg};color:${fg}" data-tip="${esc(c.lbl)}: ${Math.round(p*100)}% (${ok} de ${arr.length} sites${c.applies?" a los que aplica":""})">${Math.round(p*100)}%</td>`; };
   const vb=VIEW_NOVAL();
   const worst=[...V].sort((a,b)=>a.comp-b.comp||a.id.localeCompare(b.id,"es",{numeric:true})).slice(0,100);
-  el.innerHTML=`
+  el.innerHTML=avanceHtml()+`
    <div class="panel"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start">
      <div><h3>Completitud de la ficha por FM Office</h3><p class="sub">Porcentaje de sites que ya tienen cada dato en Autin. Debajo de cada dato está la columna del exportable donde se llena.</p></div>
      <button class="abtn pri" id="bExp">${ICON.doc}Descargar lista de pendientes</button></div>
@@ -1126,10 +1196,116 @@ function renderCalidad(){
      ${worst.map((s,i)=>`<tr class="rowlink" data-i="${i}"><td><b>${esc(s.id)}</b> ${esc(s.name)}</td><td>${esc(s.fm.replace(/^HUAWEI\s+/,""))}</td><td>${Math.round(s.comp*100)}%</td><td style="color:var(--muted)">${esc(s.missing.map(c=>c.lbl).join(", "))}</td></tr>`).join("")}
      </tbody></table></div>`;
   $("bExp").onclick=exportView; animateBars(el);
-  $("bVal").onclick=exportVal;
+  $("bVal").onclick=exportVal; wireAvance(el);
   el.querySelectorAll("tr[data-v]").forEach(r=>r.onclick=()=>{ VALF=VALF===r.dataset.v?null:r.dataset.v; refresh(true); });
   el.querySelectorAll("tr.rowlink[data-i]").forEach(r=>r.onclick=()=>select(worst[+r.dataset.i],false,false));
 }
+/* ================= Comparar con un exportable anterior ================= */
+let BASE=null; // {map:Map(id->site), fecha, nombre}
+const CMP_FIELDS=[["Coordenadas",["lon","lat"],"Longitude / Latitude"],["Dirección",["dir"],"Site address"],["Tiempo de llegada",["lleg"],"Tiempo de llegada"],["Torrera",["torrera"],"Torrera"],
+  ["Nombre en la torrera",["funcLoc"],"Functional location"],["Ubicación de llaves",["llaves"],"Ubicación de llaves"],["Tipo de acceso",["acceso"],"Tipo de acceso"],["Horario",["horario"],"Life cycle"],
+  ["Detalle de acceso",["det"],"Detalle acceso"],["Contacto",["cNom","cTel"],"Nombre / Móvil responsable"],["Correo",["cMail"],"Dirección reponsable"],["Acceso complicado",["accIssueRaw"],"Access Issue"],
+  ["Zona contingente",["dangerRaw"],"Dangerous Site"],["Escalera",["escRaw"],"PLN ID"],["Acarreo",["acarreo"],"GEP Acarreo"],["Auditables",["aud"],"Auditables"],["Autonomía",["aut"],"Autonomía de baterías"],
+  ["Fecha de autonomía",["autFechaTxt"],"Acceptance date"],["Historial de autonomía",["autHist"],"Comentarios autonomía"],["GE a instalar",["geCap"],"Capacidad GE instalar"],["Dónde va el GE",["geUbic"],"Fuel tank No."]];
+function cmpVal(x,keys){ return keys.map(k=>String(x[k]??"").trim()).join(" | ").replace(/^( \| )+|( \| )+$/g,""); }
+function fechaArchivo(f){ const m=/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/.exec(f.name); return m?new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5]):new Date(f.lastModified); }
+let DATA_DATE=null;
+async function loadBase(file){
+  showLoading(`Leyendo ${file.name}…`);
+  try{
+    await new Promise(r=>setTimeout(r,40));
+    const wb=await readBook(file); let rows=null;
+    for(const n of wb.SheetNames){ const r=XLSX.utils.sheet_to_json(wb.Sheets[n],{defval:"",raw:true}); if(r.length&&("Site ID*" in r[0]||"site_id" in r[0])){ rows=r; break; } }
+    if(!rows){ hideLoading(); toast("El archivo no tiene la columna Site ID*. Usa un exportable de sites de Autin."); return; }
+    const m=new Map(); for(const r of rows){ const x=buildSite(r); if(x){ fillRaw(x,r); m.set(x.id,x); } }
+    const d=fechaArchivo(file);
+    BASE={map:m,fecha:d,nombre:file.name};
+    hideLoading();
+    if(DATA_DATE&&d>DATA_DATE) toast("Ojo: el archivo de comparación es más reciente que el cargado. Carga primero el exportable nuevo y compara con el antiguo.");
+    else toast(`Comparando con el exportable del ${fmtFecha(d)}`);
+    renderCalidad();
+  }catch(e){ console.error(e); hideLoading(); toast("No se pudo leer el archivo: "+e.message); }
+}
+/* Valores crudos de los campos de Sí/No y fecha, para detectar cambios */
+function fillRaw(x,r){
+  const g=keys=>{ for(const c of keys) if(c in r) return clean(r[c]); return ""; };
+  x.accIssueRaw=g(COLMAP.accIssue); x.dangerRaw=g(COLMAP.danger);
+  const f=g(COLMAP.autFecha); x.autFechaTxt=f instanceof Date?fmtFecha(f):String(f||"");
+}
+$("fBase").onchange=e=>{ const f=e.target.files[0]; e.target.value=""; if(!SITES.length){ toast("Primero carga el exportable más reciente"); return; } f&&loadBase(f); };
+function calcAvance(){
+  const ids=VIEW.map(x=>x.id), base=BASE.map, pares=ids.map(id=>[SITES_BY_ID.get(id),base.get(id)]);
+  const comunes=pares.filter(p=>p[1]), nuevos=pares.filter(p=>!p[1]).map(p=>p[0]);
+  const viejosSet=new Set(SITES.map(x=>x.id)), removidos=[...base.values()].filter(x=>!viejosSet.has(x.id)&&(!$("cHw").checked||x.isHw));
+  const crit=CRIT.map(c=>{ const ap=comunes.filter(([a,b])=>!c.applies||c.applies(a)); const antes=ap.filter(([a,b])=>c.ok(b)).length, ahora=ap.filter(([a,b])=>c.ok(a)).length;
+    return {c,n:ap.length,antes,ahora,pA:ap.length?antes/ap.length:0,pH:ap.length?ahora/ap.length:0}; });
+  const compA=comunes.reduce((t,[a,b])=>t+b.comp,0)/(comunes.length||1), compH=comunes.reduce((t,[a,b])=>t+a.comp,0)/(comunes.length||1);
+  const fm={}; comunes.forEach(([a,b])=>{ const k=a.fm||"(vacío)"; (fm[k]=fm[k]||{n:0,a:0,h:0,sites:0}); fm[k].n++; fm[k].a+=b.comp; fm[k].h+=a.comp; if(a.comp>b.comp+1e-9) fm[k].sites++; });
+  const cambios=[]; let completados=0, borrados=0, modificados=0; const sitesMod=new Set(), sitesMej=new Set();
+  comunes.forEach(([a,b])=>{ CMP_FIELDS.forEach(([lbl,keys,col])=>{ const va=cmpVal(b,keys), vh=cmpVal(a,keys); if(va===vh) return;
+      const tipo=!va?"Completado":!vh?"Borrado":"Modificado"; if(tipo==="Completado") completados++; else if(tipo==="Borrado") borrados++; else modificados++;
+      sitesMod.add(a.id); cambios.push({a,lbl,col,va,vh,tipo}); });
+    if(a.comp>b.comp+1e-9) sitesMej.add(a.id); });
+  return {comunes:comunes.length,nuevos,removidos,crit,compA,compH,fm,cambios,completados,borrados,modificados,sitesMod:sitesMod.size,sitesMej:sitesMej.size};
+}
+let LAST_AV=null;
+function deltaTxt(d){ const v=Math.round(d*1000)/10; return (v>0?"+":"")+v.toFixed(1)+" pts"; }
+function avanceHtml(){
+  if(!BASE) return `<div class="panel"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+    <div><h3>Avance respecto a un exportable anterior</h3><p class="sub" style="margin:0">Carga un exportable más antiguo para ver cuántos datos se completaron desde entonces, por dato y por FM Office.</p></div>
+    <label class="abtn pri" style="cursor:pointer">${ICON.doc}Comparar con un exportable anterior<input type="file" id="fBase2" accept=".xlsx,.xls,.csv"></label></div></div>`;
+  const A=LAST_AV=calcAvance();
+  const fmRows=Object.entries(A.fm).sort((x,y)=>(y[1].h/y[1].n-y[1].a/y[1].n)-(x[1].h/x[1].n-x[1].a/x[1].n));
+  const dc=d=>d>0.0005?"var(--good)":d<-0.0005?"var(--critical)":"var(--muted)";
+  const bar=(pA,pH)=>`<div class="cbar"><i class="a" style="width:${pA*100}%"></i><i class="h" style="left:${Math.min(pA,pH)*100}%;width:${Math.abs(pH-pA)*100}%;background:${pH>=pA?"var(--good)":"var(--critical)"}"></i></div>`;
+  return `<div class="panel">
+   <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start">
+     <div><h3>Avance desde el ${fmtFecha(BASE.fecha)}</h3><p class="sub">Compara el exportable cargado${DATA_DATE?" ("+fmtFecha(DATA_DATE)+")":""} con <b>${esc(BASE.nombre)}</b>, sobre los ${A.comunes.toLocaleString()} sites en vista que existen en ambos.</p></div>
+     <div class="btnrow"><button class="abtn pri" id="bAvMail">${ICON.chat}Copiar resumen para correo</button><button class="abtn" id="bAvXls">${ICON.doc}Descargar cambios</button><button class="linkbtn" id="bAvOff">Quitar comparación</button></div></div>
+   <div class="tiles" style="margin-bottom:14px">
+     <div class="tile"><span>Completitud promedio</span><b>${Math.round(A.compH*100)}%</b><em style="color:${dc(A.compH-A.compA)}">${deltaTxt(A.compH-A.compA)} (antes ${Math.round(A.compA*100)}%)</em></div>
+     <div class="tile"><span>Datos completados</span><b>${A.completados.toLocaleString()}</b><em>campos que estaban vacíos</em></div>
+     <div class="tile"><span>Datos corregidos</span><b>${A.modificados.toLocaleString()}</b><em>campos con valor cambiado</em></div>
+     <div class="tile"><span>Sites actualizados</span><b>${A.sitesMod.toLocaleString()}</b><em>${A.sitesMej.toLocaleString()} subieron su completitud</em></div>
+     <div class="tile"><span>Datos borrados</span><b>${A.borrados.toLocaleString()}</b><em>${A.borrados?"revisar si fue intencional":"ninguno"}</em></div>
+   </div>
+   <div class="grid">
+     <div><h3 style="font-size:14px;margin:0 0 8px">Por dato</h3>
+       <table class="tbl"><thead><tr><th>Dato</th><th style="width:38%">Antes → ahora</th><th style="text-align:right">Ahora</th><th style="text-align:right">Cambio</th></tr></thead><tbody>
+       ${A.crit.map(x=>`<tr><td>${esc(x.c.lbl)}<small class="fl2">${esc(x.c.col)}</small></td><td>${bar(x.pA,x.pH)}</td><td style="text-align:right">${Math.round(x.pH*100)}%</td><td style="text-align:right;font-weight:600;color:${dc(x.pH-x.pA)}">${deltaTxt(x.pH-x.pA)}<small class="fl2">${(x.ahora-x.antes>0?"+":"")+(x.ahora-x.antes).toLocaleString()} sites</small></td></tr>`).join("")}
+       </tbody></table></div>
+     <div><h3 style="font-size:14px;margin:0 0 8px">Por FM Office</h3>
+       <table class="tbl"><thead><tr><th>FM Office</th><th style="width:38%">Antes → ahora</th><th style="text-align:right">Ahora</th><th style="text-align:right">Cambio</th></tr></thead><tbody>
+       ${fmRows.map(([k,v])=>{ const pA=v.a/v.n, pH=v.h/v.n; return `<tr><td>${esc(k.replace(/^HUAWEI\s+/,""))}<small class="fl2">${v.n} sites, ${v.sites} mejoraron</small></td><td>${bar(pA,pH)}</td><td style="text-align:right">${Math.round(pH*100)}%</td><td style="text-align:right;font-weight:600;color:${dc(pH-pA)}">${deltaTxt(pH-pA)}</td></tr>`; }).join("")}
+       </tbody></table></div>
+   </div>
+   ${A.nuevos.length||A.removidos.length?`<p class="sub" style="margin:10px 0 0">${A.nuevos.length?`${A.nuevos.length} sites en vista no estaban en el exportable anterior. `:""}${A.removidos.length?`${A.removidos.length} sites del exportable anterior ya no aparecen.`:""}</p>`:""}
+  </div>`;
+}
+function wireAvance(el){
+  if(!BASE){ const f=$("fBase2"); if(f) f.onchange=e=>{ const x=e.target.files[0]; e.target.value=""; x&&loadBase(x); }; return; }
+  $("bAvOff").onclick=()=>{ BASE=null; renderCalidad(); };
+  $("bAvXls").onclick=()=>{ const A=LAST_AV; if(!A.cambios.length){ toast("No hay cambios entre los dos exportables"); return; }
+    const rows=A.cambios.map(c=>({"Site ID":c.a.id,"Site name":c.a.name,"FM Office":c.a.fm,"Dato":c.lbl,"Campo en Autin":c.col,"Tipo de cambio":c.tipo,"Antes":c.va.slice(0,300),"Ahora":c.vh.slice(0,300)}));
+    const res=A.crit.map(x=>({"Dato":x.c.lbl,"Campo en Autin":x.c.col,"Sites que aplican":x.n,"Antes (sites)":x.antes,"Ahora (sites)":x.ahora,"Antes %":Math.round(x.pA*1000)/10,"Ahora %":Math.round(x.pH*1000)/10,"Cambio (pts)":Math.round((x.pH-x.pA)*1000)/10}));
+    const fm=Object.entries(A.fm).map(([k,v])=>({"FM Office":k,"Sites":v.n,"Completitud antes %":Math.round(v.a/v.n*1000)/10,"Completitud ahora %":Math.round(v.h/v.n*1000)/10,"Cambio (pts)":Math.round((v.h-v.a)/v.n*1000)/10,"Sites que mejoraron":v.sites}));
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(res),"por_dato");
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(fm),"por_fm_office");
+    const ws=XLSX.utils.json_to_sheet(rows); ws["!cols"]=[{wch:14},{wch:28},{wch:24},{wch:22},{wch:24},{wch:12},{wch:40},{wch:40}]; XLSX.utils.book_append_sheet(wb,ws,"cambios");
+    XLSX.writeFile(wb,`avance_inventario_${new Date().toISOString().slice(0,10)}.xlsx`); toast(`${rows.length.toLocaleString()} cambios descargados`); };
+  $("bAvMail").onclick=()=>{ const A=LAST_AV, pct=v=>Math.round(v*100)+"%";
+    const top=A.crit.filter(x=>x.ahora-x.antes>0).sort((x,y)=>(y.pH-y.pA)-(x.pH-x.pA));
+    const fmTop=Object.entries(A.fm).map(([k,v])=>[k.replace(/^HUAWEI\s+/,""),v.a/v.n,v.h/v.n]).filter(x=>Math.abs(x[2]-x[1])>0.0005).sort((x,y)=>(y[2]-y[1])-(x[2]-x[1]));
+    const L=[`Avance del inventario de sites (${fmtFecha(BASE.fecha)} al ${DATA_DATE?fmtFecha(DATA_DATE):"hoy"})`,"",
+      `- Completitud promedio de la ficha: ${pct(A.compA)} → ${pct(A.compH)} (${deltaTxt(A.compH-A.compA)}), sobre ${A.comunes.toLocaleString()} sites.`,
+      `- Datos completados: ${A.completados.toLocaleString()}; datos corregidos: ${A.modificados.toLocaleString()}; sites actualizados: ${A.sitesMod.toLocaleString()}.`,"",
+      "Por dato (antes → ahora):",...(top.length?top:A.crit).map(x=>`- ${x.c.lbl}: ${pct(x.pA)} → ${pct(x.pH)} (${(x.ahora-x.antes>0?"+":"")+(x.ahora-x.antes).toLocaleString()} sites)`),"",
+      "Por FM Office con cambios (completitud antes → ahora):",...fmTop.map(([k,a,h])=>`- ${k}: ${pct(a)} → ${pct(h)} (${deltaTxt(h-a)})`)];
+    if(A.borrados) L.push("",`Nota: ${A.borrados} datos que existían quedaron vacíos; se están revisando.`);
+    copyText(L.join("\n"),"Resumen de avance copiado"); };
+}
+
 /* Sites en vista sin aplicar el filtro de validación (para contar cada observación) */
 function VIEW_NOVAL(){ const k=VALF; VALF=null; const r=SITES.filter(x=>passes(x,null)); VALF=k; return r; }
 function exportVal(){
@@ -1276,6 +1452,9 @@ $("colorBy").onchange=()=>{ renderMap(false); renderList(); };
 $("q").addEventListener("input",()=>{ clearTimeout(window._qt); window._qt=setTimeout(()=>refresh(false),250); });
 $("q").addEventListener("keydown",e=>{ if(e.key==="Enter"){ clearTimeout(window._qt); refresh(false); } if(e.key==="Enter"&&VIEW.length){ const s=[...VIEW].sort(SORTS.id)[0]; setView("vMapa"); select(s,true,true); } });
 $("cHw").onchange=()=>refresh(true);
+$("cCom").checked=String(lsGet("hdv_com","0"))==="1";
+$("cCom").onchange=()=>{ try{ localStorage.setItem("hdv_com",$("cCom").checked?"1":"0"); }catch(e){} $("q").placeholder=$("cCom").checked?"Buscar también dentro de comentarios y detalle de acceso":"Buscar ID, nombre, nombre en torrera o dirección"; refresh(true); if(typeof remountFicha==="function") remountFicha(); };
+if($("cCom").checked) $("q").placeholder="Buscar también dentro de comentarios y detalle de acceso";
 $("bReset").onclick=()=>{ $("q").value=""; FILTERS.forEach(f=>SELF[f.id].clear()); QON.clear(); IDSET=null; $("idsTxt").value=""; NEAR=null; VALF=null; refresh(true); };
 
 $("bPlantG").onclick=()=>copyPlantilla(null);
@@ -1318,7 +1497,8 @@ async function loadFile(file){
     showLoading("Armando el mapa y las fichas…"); await new Promise(r=>setTimeout(r,20));
     for(const n of wb.SheetNames){ const r=XLSX.utils.sheet_to_json(wb.Sheets[n],{defval:"",raw:true}); if(r.length&&("Site ID*" in r[0]||"site_id" in r[0])){ rows=r; break; } }
     if(!rows){ hideLoading(); toast("El archivo no tiene la columna Site ID*. Usa el exportable de sites de Autin."); return; }
-    const out=[]; for(const r of rows){ const s=buildSite(r); if(s){ s._row=r; out.push(s); } }
+    const out=[]; for(const r of rows){ const s=buildSite(r); if(s){ s._row=r; fillRaw(s,r); out.push(s); } }
+    SITES_BY_ID=new Map(out.map(x=>[x.id,x])); DATA_DATE=fechaArchivo(file); BASE=null;
     SITES=out; SEL=null; $("drop").style.display="none"; $("bSel").style.display="none";
     const m=/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/.exec(file.name);
     const d=m?new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5]):new Date(file.lastModified);

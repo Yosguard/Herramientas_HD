@@ -104,6 +104,7 @@ li{margin:4px 0}#bxt th,#bxt td{padding:3px 8px;white-space:nowrap}.spin{width:3
 const REF0=`HUAWEI|No Aplica|||||
 MOVIL_DEFAULT|No Aplica|||||
 LIMA TECNOCOM|No Aplica|||||
+LIMA NORTE CHICO - PRONATEL|No Aplica|||||
 CICSA NORTE CHICLAYO|No Aplica|||||
 CICSA NORTE IQUITOS|No Aplica|||||
 CICSA NORTE PUCALLPA|No Aplica|||||
@@ -146,7 +147,7 @@ HUAWEI CENTRO TARMA|Aplica|PERCY RODRIGUEZ|RODRIGO HUAMANI|CENTRO|COBRA|TARMA
 HUAWEI CENTRO VRAEM|Aplica|PERCY RODRIGUEZ|GERARDO GARCIA|CENTRO|COBRA|VRAEM`;
 const KEYS=['Sin_acceso_por_hora_para_subir_a_torre','Problemas_acceso','Repuestos_tx','Repuesto_de_energia','Soporte_L2_L3_retorno_site','Repuestos_de_radio'];
 const zd=()=>({c1:[0,100],c2:[0,100],c5:[0,100],c6:[0,100]}),PL=['#5aa7f0','#f0805a','#3fd0a0','#f2b84b','#a78bfa','#f06292','#4dd0e1','#b0b0aa'],PD=['#1d5fa6','#b8431f','#0f7a5a','#a8700f','#6b45c9','#b02d5d','#1a8a99','#55554f'];
-let C1M='bar',D0=[],REF=[],RM_={},PV='*',RMS='*',SUPF='*',DPF=false,DF='',DT='',ZM=zd(),D=[],S='D',R='*',Z='*',EX=false,SEL='',SID='',CH={};
+let C1M='bar',D0=[],REF=[],RM_={},RC_={},PV='*',RMS='*',SUPF='*',DPF=false,DF='',DT='',ZM=zd(),D=[],S='D',R='*',Z='*',EX=false,SEL='',SID='',CH={};
 const $=i=>document.getElementById(i),p=n=>String(n).padStart(2,'0'),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const ymd=x=>x.getFullYear()+'-'+p(x.getMonth()+1)+'-'+p(x.getDate());
 function rz(o){const s=(o||'').toUpperCase().replace(/HUAWEI|CLARO|CICSA/g,'').replace(/\s+/g,' ').trim();return[s.startsWith('LIMA')?'LIMA':'CENTRO',s.replace(/^CENTRO\s+/,'')||s]}
@@ -259,16 +260,16 @@ function render(keepZ){
 }
 function detail(base){const L=base.filter(r=>r.id==SID);$('dt').textContent='· '+SID+' ('+L.length+')';$('td').innerHTML='<tr><th>Ticket</th><th>Creado</th><th>Estado</th><th>Cierre (h)</th><th>Hijo</th></tr>'+L.map(r=>`<tr><td>${esc(r.tid)}</td><td>${r.c.replace('T',' ')}</td><td>${r.st}</td><td>${r.cm?hrs(r).toFixed(1):'-'}</td><td>${r.ch?'Sí':''}</td></tr>`).join('')}
 const showLoad=m=>{$('ld').style.display='flex';$('ldt').textContent=m},hideLoad=()=>{$('ld').style.display='none'},tick=async m=>{if(m)$('ldt').textContent=m;await new Promise(r=>setTimeout(r,40))};
-const refGet=o=>RM_[nk(o)]||null;
-const nk=s=>String(s||'').toUpperCase().replace(/\s+/g,' ').trim();
+const refGet=o=>RM_[nk(o)]||RC_[core(o)]||null;
+const nk=s=>String(s||'').toUpperCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim(),core=s=>nk(s).split(' ').filter(w=>w&&w!=='HUAWEI'&&w!=='CLARO'&&w!=='CICSA').join(' ');
 const pr=s=>s.split('\n').map(l=>l.split('|'));
-function ap(r){const e=RM_[nk(r.o)];if(e){r.hr=1;r.es=e[1]||'Aplica';r.rm=e[2]||'(Sin RM)';r.sp=e[3]||'(Sin supervisor)';r.pv=e[5]||'(Sin proveedor)';const f=rz(r.o);r.r=e[4]||f[0];r.z=e[6]||f[1]}else{r.hr=0;r.es='Aplica';r.rm='(Sin referencia)';r.sp='(Sin referencia)';r.pv='(Sin referencia)';[r.r,r.z]=rz(r.o)}}
-function prep(){RM_={};REF.forEach(e=>{const k=nk(e[0]);if(k&&!RM_[k])RM_[k]=e});D0.forEach(ap);D=D0.filter(r=>r.es!='No Aplica')}
+function ap(r){const e=refGet(r.o);if(e){r.hr=1;r.es=e[1]||'Aplica';r.rm=e[2]||'(Sin RM)';r.sp=e[3]||'(Sin supervisor)';r.pv=e[5]||'(Sin proveedor)';const f=rz(r.o);r.r=e[4]||f[0];r.z=e[6]||f[1]}else{r.hr=0;r.es='Aplica';r.rm='(Sin referencia)';r.sp='(Sin referencia)';r.pv='(Sin referencia)';[r.r,r.z]=rz(r.o)}}
+function prep(){RM_={};RC_={};REF.forEach(e=>{const k=nk(e[0]);if(k&&!RM_[k])RM_[k]=e;const c=core(e[0]);if(c&&!RC_[c]&&e[1]==='No Aplica')RC_[c]=e});D0.forEach(ap);D=D0.filter(r=>r.es!='No Aplica')}
 function opts(){[['selP','pv'],['selM','rm'],['selS','sp']].forEach(([id,f])=>{const u=[...new Set(D.map(r=>r[f]))].sort(),cur=f=='pv'?PV:f=='rm'?RMS:SUPF,nv=u.includes(cur)?cur:'*';if(f=='pv')PV=nv;else if(f=='rm')RMS=nv;else SUPF=nv;$(id).innerHTML='<option value="*">Todos</option>'+u.map(x=>`<option>${esc(x)}</option>`).join('');$(id).value=nv})}
 function load(rows){D0=rows.map(mk).filter(r=>r.c);prep();const ds=D.map(r=>r.c.slice(0,10)).sort();DF=ds[0]||'';DT=ds[ds.length-1]||'';$('df').value=DF;$('dh').value=DT;opts();zones();render()}
 function applyRef(){prep();opts();zones();if(!$('pg1').hidden)render();if(window.PM)PM.rebuild()}
 const saveRef=()=>{try{localStorage.setItem('cm_ref_v3',JSON.stringify(REF))}catch(e){}};
-function drawRef(){const q=nk($('rq').value),H=['FM Office','ESTADO','RM','SUPERVISOR','REGION','PROVEEDOR','ZONA',''],U={};D0.filter(r=>!r.hr).forEach(r=>U[r.o]=(U[r.o]||0)+1);
+function drawRef(){const q=nk($('rq').value),H=['FM Office','ESTADO','RM','SUPERVISOR','REGION','PROVEEDOR','ZONA',''],U={};D0.filter(r=>!r.hr).forEach(r=>U[r.o]=(U[r.o]||0)+1);if(window.PM&&PM.unmatched)Object.entries(PM.unmatched()).forEach(([o,n])=>{U[o]=(U[o]||0)+n});
  $('ru').innerHTML=`${REF.length} filas · ${D0.length-D.length} tickets excluidos por "No Aplica" · `+(Object.keys(U).length?'Sin referencia (clic para agregar): '+Object.entries(U).map(([o,n])=>`<span class="chip" data-u="${esc(o)}">${esc(o)} (${n})</span> `).join(''):'todos los FM Office de los datos tienen referencia');
  $('rt').innerHTML='<tr>'+H.map(h=>`<th>${h}</th>`).join('')+'</tr>'+REF.map((e,i)=>[e,i]).filter(([e])=>!q||nk(e.join(' ')).includes(q)).map(([e,i])=>'<tr>'+[0,1,2,3,4,5,6].map(j=>j==1?`<td><select data-i="${i}" data-j="1">${['Aplica','No Aplica'].map(o=>`<option${o==e[1]?' selected':''}>${o}</option>`).join('')}</select></td>`:`<td><input data-i="${i}" data-j="${j}" value="${esc(e[j]||'')}"></td>`).join('')+`<td><button data-d="${i}">✕</button></td></tr>`).join('')}
 $('rt').onchange=e=>{const x=e.target;if(x.dataset.i!=null){REF[+x.dataset.i][+x.dataset.j]=+x.dataset.j==1?x.value:x.value.trim().toUpperCase();saveRef();applyRef();if(+x.dataset.j==0)drawRef()}};
@@ -282,6 +283,7 @@ function tab(n){[1,2,3].forEach(i=>{$('pg'+i).hidden=n!=i;$('t'+i).classList.tog
 $('t1').onclick=()=>tab(1);$('t2').onclick=()=>tab(2);$('t3').onclick=()=>tab(3);
 $('selP').onchange=e=>{PV=e.target.value;zones();SEL='';ZM=zd();render()};$('selM').onchange=e=>{RMS=e.target.value;zones();SEL='';ZM=zd();render()};$('selS').onchange=e=>{SUPF=e.target.value;zones();SEL='';ZM=zd();render()};
 try{REF=JSON.parse(localStorage.getItem('cm_ref_v3')||'null')}catch(e){}if(!REF||!REF.length)REF=pr(REF0);
+try{if(!localStorage.getItem('cm_ref_mig_pronatel')){if(!REF.some(e=>core(e[0])===core('LIMA NORTE CHICO - PRONATEL')))REF.push(['LIMA NORTE CHICO - PRONATEL','No Aplica','','','','','']);localStorage.setItem('cm_ref_v3',JSON.stringify(REF));localStorage.setItem('cm_ref_mig_pronatel','1')}}catch(e){}
 function f19(v){if(!v)return null;if(v instanceof Date)return v.getFullYear()+'-'+p(v.getMonth()+1)+'-'+p(v.getDate())+'T'+p(v.getHours())+':'+p(v.getMinutes())+':'+p(v.getSeconds());return String(v).trim().replace(' ','T').slice(0,19)}
 function parseMtask(js){
  const H={};if(js.length)Object.keys(js[0]).forEach(k=>{H[k.replace(/\s+/g,' ').trim().toLowerCase()]=k});
@@ -583,7 +585,7 @@ function setTarget(z,v){ZT[z]=Math.max(0,Math.round(+v)||0);try{localStorage.set
 function resetTargets(){ZT={};try{localStorage.removeItem('pm_zt_v1')}catch(e){}renderZone()}
 function setScale(s){PS=s;T.forEach(r=>{r.mes=pkey(r.d,PS)});['D','W','M','Q'].forEach(k=>{const b=$('sc_'+k);if(b)b.className=k===s?'on':''});render()}
 function setData(rows,name){T0=rows;PSUB=(name?name+' · ':'')+rows.length+' tickets PM';build(true)}
-window.PM={render,build,setUnit,setScale,setZM,setTarget,resetTargets,exportExcel,closeModal,setData,setDim:v=>{dim=v;render()},setT1m:v=>{t1m=v;render()},rebuild:()=>{if(T0.length)build()}};
+window.PM={unmatched:()=>{const U={};T0.forEach(r=>{const o=r['FM Office Site']||r['FM Office'];if(o&&!refGet(o))U[o]=(U[o]||0)+1});return U},render,build,setUnit,setScale,setZM,setTarget,resetTargets,exportExcel,closeModal,setData,setDim:v=>{dim=v;render()},setT1m:v=>{t1m=v;render()},rebuild:()=>{if(T0.length)build()}};
 
 })();
 </script></body></html>
